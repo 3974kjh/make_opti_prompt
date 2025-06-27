@@ -13,7 +13,10 @@ const config = {
 		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 		adapter: adapter({
 			// Cloudflare Pages 설정
-			fallback: '200.html'
+			routes: {
+				include: ['/*'],
+				exclude: ['<all>']
+			}
 		}),
 		alias: {
 			$lib: './src/lib'

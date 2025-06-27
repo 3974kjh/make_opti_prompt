@@ -14,7 +14,7 @@ npm run lint
 npm run check
 
 # 빌드
-echo "🏗️  프로젝트 빌드 중..."
+echo "🏗️ 프로젝트 빌드 중..."
 npm run build
 
 # 빌드 성공 확인
@@ -24,7 +24,7 @@ if [ $? -eq 0 ]; then
     # Wrangler가 설치되어 있는지 확인
     if command -v wrangler &> /dev/null; then
         echo "🌐 Cloudflare Pages에 배포 중..."
-        wrangler pages deploy build --project-name=llm-prompt-optimizer
+        wrangler pages deploy .svelte-kit/output/client --project-name=llm-prompt-optimizer
         
         if [ $? -eq 0 ]; then
             echo "🎉 배포 완료!"
@@ -34,11 +34,16 @@ if [ $? -eq 0 ]; then
             exit 1
         fi
     else
-        echo "⚠️  Wrangler CLI가 설치되지 않았습니다."
+        echo "⚠️ Wrangler CLI가 설치되지 않았습니다."
         echo "다음 명령어로 설치하세요: npm install -g wrangler"
-        echo "또는 GitHub 연동을 통해 배포하세요."
+        echo "또는 GitHub 연동을 사용하세요."
+        echo ""
+        echo "📖 자세한 내용은 README.md를 참조하세요."
     fi
 else
     echo "❌ 빌드 실패!"
     exit 1
-fi 
+fi
+
+echo ""
+echo "🎉 스크립트 완료!" 

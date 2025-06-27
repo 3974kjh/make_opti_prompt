@@ -92,46 +92,71 @@ npm run build
    - 빌드 설정:
      - **Framework preset**: `SvelteKit`
      - **Build command**: `npm run build`
-     - **Build output directory**: `build`
+     - **Build output directory**: `.svelte-kit/output/client`
      - **Root directory**: `/` (기본값)
      - **Node.js version**: `18` 또는 `20`
 
-3. **환경 변수 설정** (필요시)
-   - Pages 프로젝트 → **Settings** → **Environment variables**
+3. **환경 변수 설정 (선택사항)**
+   ```
+   NODE_VERSION=20
+   ```
+
+4. **배포 시작**
+   - **Save and Deploy** 클릭
 
 #### 방법 2: Wrangler CLI 사용
 
-1. **Wrangler 설치 및 로그인**
+1. **Wrangler 설치**
    ```bash
    npm install -g wrangler
+   ```
+
+2. **Cloudflare 로그인**
+   ```bash
    wrangler login
    ```
 
-2. **프로젝트 빌드 및 배포**
+3. **배포**
    ```bash
-   npm run build
-   wrangler pages deploy build --project-name=llm-prompt-optimizer
+   # Windows
+   .\deploy.bat
+   
+   # Linux/Mac
+   ./deploy.sh
    ```
 
-### 빌드 설정
+### 🔧 빌드 설정 상세
 
-- **Node.js 버전**: 18 이상
-- **패키지 매니저**: npm, pnpm, yarn 모두 지원
 - **빌드 명령어**: `npm run build`
-- **출력 디렉토리**: `build/`
+- **출력 디렉토리**: `.svelte-kit/output/client`
+- **Node.js 버전**: 18+ 권장
+- **패키지 매니저**: npm (권장)
 
-### 환경별 설정
+### ✅ 배포 후 확인사항
 
-#### 개발 환경
+1. **사이트 접속 확인**
+2. **파비콘 표시 확인**
+3. **5W1H 입력 기능 테스트**
+4. **프롬프트 생성 테스트**
+5. **템플릿 저장/로드 테스트**
+6. **반응형 디자인 확인**
+
+### 🐛 문제 해결
+
+**빌드 오류 시:**
 ```bash
-npm run dev
-```
+# 의존성 재설치
+rm -rf node_modules package-lock.json
+npm install
 
-#### 프로덕션 빌드
-```bash
+# 빌드 재시도
 npm run build
-npm run preview
 ```
+
+**배포 실패 시:**
+- 빌드 출력 디렉토리가 `.svelte-kit/output/client`인지 확인
+- Node.js 버전이 18+ 인지 확인
+- 빌드 명령어가 `npm run build`인지 확인
 
 ## 📁 프로젝트 구조
 

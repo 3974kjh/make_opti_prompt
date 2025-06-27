@@ -39,7 +39,7 @@ REM Wrangler 확인 및 배포
 where wrangler >nul 2>nul
 if %errorlevel% equ 0 (
     echo 🌐 Cloudflare Pages에 배포 중...
-    call wrangler pages deploy build --project-name=llm-prompt-optimizer
+    call wrangler pages deploy .svelte-kit/output/client --project-name=llm-prompt-optimizer
     if %errorlevel% equ 0 (
         echo 🎉 배포 완료!
         echo 📱 배포된 사이트: https://llm-prompt-optimizer.pages.dev
@@ -51,7 +51,11 @@ if %errorlevel% equ 0 (
 ) else (
     echo ⚠️ Wrangler CLI가 설치되지 않았습니다.
     echo 다음 명령어로 설치하세요: npm install -g wrangler
-    echo 또는 GitHub 연동을 통해 배포하세요.
+    echo 또는 GitHub 연동을 사용하세요.
+    echo.
+    echo 📖 자세한 내용은 README.md를 참조하세요.
 )
 
+echo.
+echo 🎉 스크립트 완료!
 pause 
