@@ -95,28 +95,36 @@ Unix/Linux/macOS:
 #### 1. 구글 서치 콘솔
 1. [Google Search Console](https://search.google.com/search-console) 접속
 2. 사이트 추가: `https://make-opti-prompt.pages.dev`
-3. HTML 파일 다운로드 후 `static/` 폴더에 업로드
-4. 또는 `src/app.html`의 `google-site-verification` 메타태그에 인증 코드 입력
+3. **HTML 태그** 인증 방법 선택
+4. 제공된 메타태그의 `content` 값을 복사
+5. `src/app.html`의 `google-site-verification` 메타태그 `content`에 붙여넣기
 
 #### 2. 네이버 웹마스터도구
 1. [네이버 웹마스터도구](https://searchadvisor.naver.com/) 접속
 2. 사이트 추가: `https://make-opti-prompt.pages.dev`
-3. HTML 파일 다운로드 후 `static/` 폴더에 업로드
-4. 또는 `src/app.html`의 `naver-site-verification` 메타태그에 인증 코드 입력
+3. **HTML 태그** 인증 방법 선택
+4. 제공된 메타태그의 `content` 값을 복사
+5. `src/app.html`의 `naver-site-verification` 메타태그 `content`에 붙여넣기
 
 #### 3. 다음 검색등록
 1. [다음 검색등록](https://register.search.daum.net/index.daum) 접속
 2. 사이트 URL 입력: `https://make-opti-prompt.pages.dev`
-3. 사이트 정보 입력 및 등록
+3. 사이트 정보 입력 및 등록 (별도 인증 불필요)
 
 #### 4. 빙 웹마스터도구
 1. [Bing Webmaster Tools](https://www.bing.com/webmasters) 접속
 2. 사이트 추가: `https://make-opti-prompt.pages.dev`
-3. 사이트 인증 완료
+3. 구글 서치 콘솔 계정으로 가져오기 권장
 
 ### 사이트맵 제출
 각 검색엔진 웹마스터도구에서 사이트맵 URL 제출:
 - 사이트맵 URL: `https://make-opti-prompt.pages.dev/sitemap.xml`
+
+### 인증 완료 후 할 일
+1. 사이트 빌드 & 배포 (변경사항 반영)
+2. 각 웹마스터도구에서 인증 확인
+3. 사이트맵 제출
+4. 색인 요청 (선택사항)
 
 ## 프로젝트 구조
 
