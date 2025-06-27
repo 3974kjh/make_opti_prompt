@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <defs>
+    <!-- 메인 그라데이션 -->
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="35%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="65%" style="stop-color:#8B5CF6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EC4899;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 뇌 그라데이션 -->
+    <linearGradient id="brainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#F8FAFC;stop-opacity:0.9" />
+    </linearGradient>
+    
+    <!-- 번개 그라데이션 -->
+    <linearGradient id="lightningGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FEF3C7;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FCD34D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 그림자 필터 -->
+    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    
+    <!-- 내부 그림자 -->
+    <filter id="innerShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+  
+  <!-- 배경 -->
+  <rect width="180" height="180" rx="32" fill="url(#mainGradient)" filter="url(#dropShadow)"/>
+  
+  <!-- 뇌/AI 심볼 (상단 중앙) -->
+  <path d="M60 50 C60 40, 70 35, 80 40 C85 35, 95 35, 100 40 C105 35, 115 35, 120 40 C130 45, 130 55, 125 65 C130 70, 125 80, 115 80 C105 85, 95 85, 85 80 C75 85, 65 85, 55 80 C45 80, 40 70, 45 65 C40 55, 40 45, 50 40 C55 35, 60 40, 60 50 Z" 
+        fill="url(#brainGradient)" 
+        stroke="#FFFFFF" 
+        stroke-width="2"
+        filter="url(#innerShadow)"/>
+  
+  <!-- 뇌 내부 회로 패턴 -->
+  <circle cx="75" cy="60" r="4" fill="#3B82F6" opacity="0.7"/>
+  <circle cx="90" cy="55" r="3" fill="#6366F1" opacity="0.6"/>
+  <circle cx="105" cy="60" r="4" fill="#8B5CF6" opacity="0.7"/>
+  <path d="M75 60 L90 55 L105 60" stroke="#3B82F6" stroke-width="2" opacity="0.5" fill="none"/>
+  <path d="M80 65 L95 65" stroke="#8B5CF6" stroke-width="1.5" opacity="0.4" fill="none"/>
+  
+  <!-- 번개/최적화 심볼 (하단) -->
+  <path d="M105 95 L85 115 L95 115 L75 145 L95 125 L85 125 L105 95 Z" 
+        fill="url(#lightningGradient)" 
+        stroke="#F59E0B" 
+        stroke-width="1.5"
+        filter="url(#innerShadow)"/>
+  
+  <!-- 5W1H 연결 포인트들 -->
+  <circle cx="30" cy="90" r="6" fill="#FFFFFF" opacity="0.9" filter="url(#innerShadow)"/>
+  <circle cx="150" cy="90" r="6" fill="#FFFFFF" opacity="0.9" filter="url(#innerShadow)"/>
+  <circle cx="90" cy="30" r="5" fill="#FFFFFF" opacity="0.8" filter="url(#innerShadow)"/>
+  <circle cx="90" cy="150" r="5" fill="#FFFFFF" opacity="0.8" filter="url(#innerShadow)"/>
+  <circle cx="45" cy="45" r="4" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="135" cy="135" r="4" fill="#FFFFFF" opacity="0.7"/>
+  
+  <!-- 연결선들 -->
+  <path d="M36 90 L55 70" stroke="#FFFFFF" stroke-width="2" opacity="0.4"/>
+  <path d="M144 90 L125 70" stroke="#FFFFFF" stroke-width="2" opacity="0.4"/>
+  <path d="M90 36 L90 45" stroke="#FFFFFF" stroke-width="2" opacity="0.3"/>
+  <path d="M90 144 L90 135" stroke="#FFFFFF" stroke-width="2" opacity="0.3"/>
+  
+  <!-- 중앙 하이라이트 링 -->
+  <circle cx="90" cy="90" r="12" fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.3"/>
+  <circle cx="90" cy="90" r="8" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.5"/>
+  
+  <!-- 작은 장식 요소들 -->
+  <circle cx="70" cy="35" r="2" fill="#FCD34D" opacity="0.6"/>
+  <circle cx="110" cy="35" r="2" fill="#FCD34D" opacity="0.6"/>
+  <circle cx="145" cy="70" r="2" fill="#FCD34D" opacity="0.5"/>
+  <circle cx="35" cy="110" r="2" fill="#FCD34D" opacity="0.5"/>
+</svg> 

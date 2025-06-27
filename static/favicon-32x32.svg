@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="50%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#EC4899"/>
+    </linearGradient>
+    
+    <linearGradient id="brainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.95"/>
+      <stop offset="100%" style="stop-color:#F3F4F6;stop-opacity:0.85"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- 배경 -->
+  <rect width="32" height="32" rx="6" fill="url(#bgGrad)"/>
+  
+  <!-- 뇌/AI 심볼 -->
+  <path d="M8 8 C8 6, 10 6, 12 7 C14 6, 16 6, 18 7 C20 8, 20 10, 19 11 C20 12, 19 14, 17 14 C15 15, 13 15, 11 14 C9 14, 8 12, 9 11 C8 10, 8 8, 8 8 Z" 
+        fill="url(#brainGrad)" 
+        stroke="#FFFFFF" 
+        stroke-width="0.5"/>
+  
+  <!-- 뇌 내부 회로 -->
+  <circle cx="11" cy="10" r="1" fill="#3B82F6" opacity="0.7"/>
+  <circle cx="15" cy="10" r="1" fill="#8B5CF6" opacity="0.7"/>
+  <path d="M11 10 L15 10" stroke="#3B82F6" stroke-width="0.5" opacity="0.5"/>
+  
+  <!-- 번개/최적화 심볼 -->
+  <path d="M16 16 L12 20 L14 20 L11 26 L15 22 L13 22 L16 16 Z" 
+        fill="#FCD34D" 
+        stroke="#F59E0B" 
+        stroke-width="0.3"/>
+  
+  <!-- 5W1H 포인트들 -->
+  <circle cx="5" cy="16" r="1" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="27" cy="16" r="1" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="16" cy="5" r="1" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="16" cy="27" r="1" fill="#FFFFFF" opacity="0.6"/>
+  
+  <!-- 연결선 -->
+  <path d="M6 16 L9 13" stroke="#FFFFFF" stroke-width="0.5" opacity="0.4"/>
+  <path d="M26 16 L19 13" stroke="#FFFFFF" stroke-width="0.5" opacity="0.4"/>
+</svg> 
