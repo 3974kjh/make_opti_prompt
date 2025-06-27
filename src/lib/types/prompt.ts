@@ -262,4 +262,13 @@ export interface OptimizationSuggestion {
   difficulty: 'easy' | 'medium' | 'hard';
   techniqueRecommendation?: PromptTechnique;
   estimatedImprovement?: number;  // 예상 품질 향상 (%)
+}
+
+// 사용자 정의 템플릿 타입
+export interface UserTemplate {
+  id: string;
+  name: string;
+  data: PromptFormData;
+  options: PromptGenerationOptions; // 프롬프트 옵션 추가
+  createdAt: string;
 } 

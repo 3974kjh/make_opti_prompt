@@ -1,22 +1,16 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { fade, slide, scale } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
   import toast from 'svelte-hot-french-toast';
-  import type { PromptFormData, PromptTemplate, QualityMetrics, DynamicItem, PromptGenerationOptions } from '$lib/types/prompt';
+  import type { PromptFormData, PromptTemplate, QualityMetrics, DynamicItem, PromptGenerationOptions, UserTemplate } from '$lib/types/prompt';
   import { PromptCategory, PromptTechnique } from '$lib/types/prompt';
   import { DEFAULT_TEMPLATES, CATEGORY_NAMES, getTemplateById } from '$lib/data/templates';
   import { PromptGenerator } from '$lib/services/promptGenerator';
-  
-  // 사용자 정의 템플릿 타입
-  interface UserTemplate {
-    id: string;
-    name: string;
-    data: PromptFormData;
-    options: PromptGenerationOptions; // 프롬프트 옵션 추가
-    createdAt: string;
-  }
-  
+  import TemplateEditModal from '$lib/components/modals/TemplateEditModal.svelte';
+  import TemplateSaveModal from '$lib/components/modals/TemplateSaveModal.svelte';
+  import TemplatePreviewModal from '$lib/components/modals/TemplatePreviewModal.svelte';
+
   // 상태 관리
   let formData = $state<PromptFormData>({
     who: [],
@@ -80,7 +74,7 @@
   // UI 상태
   let showAdvancedOptions = $state(false);
   
-  // 커스텀 select 상태
+  // 커스텀 select 상태 - 클릭 기반으로 변경
   let templateSelectOpen = $state(false);
   let techniqueSelectOpen = $state(false);
   let outputFormatSelectOpen = $state(false);
@@ -90,267 +84,139 @@
   let techniqueButtonRect = $state<DOMRect | null>(null);
   let outputFormatButtonRect = $state<DOMRect | null>(null);
   
-  // 드롭다운 상태 관리
-  let templateHoverTimeout: ReturnType<typeof setTimeout> | null = null;
-  let techniqueHoverTimeout: ReturnType<typeof setTimeout> | null = null;
-  let outputFormatHoverTimeout: ReturnType<typeof setTimeout> | null = null;
-  
-  // 드롭다운 열기 딜레이 타이머들
-  let templateOpenTimeout: ReturnType<typeof setTimeout> | null = null;
-  let techniqueOpenTimeout: ReturnType<typeof setTimeout> | null = null;
-  let outputFormatOpenTimeout: ReturnType<typeof setTimeout> | null = null;
-  
-  // 드롭다운 토글 함수들
-  function handleTemplateHover(event: Event) {
-    // 기존 타이머들 정리
-    if (templateHoverTimeout) {
-      clearTimeout(templateHoverTimeout);
-      templateHoverTimeout = null;
-    }
-    if (templateOpenTimeout) {
-      clearTimeout(templateOpenTimeout);
-      templateOpenTimeout = null;
-    }
+  // 드롭다운 클릭 토글 함수들
+  function toggleTemplateDropdown(event: Event) {
+    event.stopPropagation();
     
-    // 버튼 요소와 위치 정보를 미리 계산
-    const button = event.currentTarget as HTMLElement;
-    const rect = button.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // 다른 드롭다운들 닫기
+    techniqueSelectOpen = false;
+    outputFormatSelectOpen = false;
     
-    // 드롭다운 너비는 버튼 너비와 동일하게
-    const dropdownWidth = rect.width;
-    const dropdownHeight = 320;
-    
-    // 가로 위치 조정
-    let left = rect.left;
-    if (left + dropdownWidth > viewportWidth - 20) {
-      left = viewportWidth - dropdownWidth - 20;
-    }
-    
-    // 세로 위치 조정
-    let top = rect.bottom + 8;
-    let isAbove = false;
-    if (top + dropdownHeight > viewportHeight - 20) {
-      top = rect.top - dropdownHeight - 8;
-      isAbove = true;
-    }
-    
-    const calculatedRect = {
-      ...rect,
-      left: Math.max(20, left),
-      top: Math.max(20, top),
-      bottom: isAbove ? top + dropdownHeight : top,
-      width: dropdownWidth
-    };
-    
-    // 0.3초 후에 드롭다운 열기
-    templateOpenTimeout = setTimeout(() => {
-      templateButtonRect = calculatedRect;
+    if (!templateSelectOpen) {
+      // 드롭다운 열기
+      const button = event.currentTarget as HTMLElement;
+      const rect = button.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      const dropdownWidth = Math.max(rect.width, 300); // 최소 너비 300px
+      const dropdownHeight = 320;
+      
+      // 가로 위치 조정
+      let left = rect.left;
+      if (left + dropdownWidth > viewportWidth - 20) {
+        left = viewportWidth - dropdownWidth - 20;
+      }
+      
+      // 세로 위치 조정
+      let top = rect.bottom + 8;
+      let isAbove = false;
+      if (top + dropdownHeight > viewportHeight - 20) {
+        top = rect.top - dropdownHeight - 8;
+        isAbove = true;
+      }
+      
+      templateButtonRect = {
+        ...rect,
+        left: Math.max(20, left),
+        top: Math.max(20, top),
+        bottom: isAbove ? top + dropdownHeight : top,
+        width: dropdownWidth
+      };
       templateSelectOpen = true;
-    }, 300); // 테스트용 짧은 딜레이
-  }
-  
-  function handleTechniqueHover(event: Event) {
-    // 기존 타이머들 정리
-    if (techniqueHoverTimeout) {
-      clearTimeout(techniqueHoverTimeout);
-      techniqueHoverTimeout = null;
-    }
-    if (techniqueOpenTimeout) {
-      clearTimeout(techniqueOpenTimeout);
-      techniqueOpenTimeout = null;
-    }
-    
-    // 버튼 요소와 위치 정보를 미리 계산
-    const button = event.currentTarget as HTMLElement;
-    const rect = button.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // 드롭다운 너비는 버튼 너비와 동일하게
-    const dropdownWidth = rect.width;
-    const dropdownHeight = 320;
-    
-    let left = rect.left;
-    if (left + dropdownWidth > viewportWidth - 20) {
-      left = viewportWidth - dropdownWidth - 20;
-    }
-    
-    let top = rect.bottom + 8;
-    let isAbove = false;
-    if (top + dropdownHeight > viewportHeight - 20) {
-      top = rect.top - dropdownHeight - 8;
-      isAbove = true;
-    }
-    
-    const calculatedRect = {
-      ...rect,
-      left: Math.max(20, left),
-      top: Math.max(20, top),
-      bottom: isAbove ? top + dropdownHeight : top,
-      width: dropdownWidth
-    };
-    
-    // 0.3초 후에 드롭다운 열기
-    techniqueOpenTimeout = setTimeout(() => {
-      techniqueButtonRect = calculatedRect;
-      techniqueSelectOpen = true;
-    }, 300); // 테스트용 짧은 딜레이
-  }
-  
-  function handleOutputFormatHover(event: Event) {
-    // 기존 타이머들 정리
-    if (outputFormatHoverTimeout) {
-      clearTimeout(outputFormatHoverTimeout);
-      outputFormatHoverTimeout = null;
-    }
-    if (outputFormatOpenTimeout) {
-      clearTimeout(outputFormatOpenTimeout);
-      outputFormatOpenTimeout = null;
-    }
-    
-    // 버튼 요소와 위치 정보를 미리 계산
-    const button = event.currentTarget as HTMLElement;
-    const rect = button.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // 드롭다운 너비는 버튼 너비와 동일하게
-    const dropdownWidth = rect.width;
-    const dropdownHeight = 200; // 출력 형식은 옵션이 적으므로 높이 줄임
-    
-    let left = rect.left;
-    if (left + dropdownWidth > viewportWidth - 20) {
-      left = viewportWidth - dropdownWidth - 20;
-    }
-    
-    let top = rect.bottom + 8;
-    let isAbove = false;
-    if (top + dropdownHeight > viewportHeight - 20) {
-      top = rect.top - dropdownHeight - 8;
-      isAbove = true;
-    }
-    
-    const calculatedRect = {
-      ...rect,
-      left: Math.max(20, left),
-      top: Math.max(20, top),
-      bottom: isAbove ? top + dropdownHeight : top,
-      width: dropdownWidth
-    };
-    
-    // 0.3초 후에 드롭다운 열기
-    outputFormatOpenTimeout = setTimeout(() => {
-      outputFormatButtonRect = calculatedRect;
-      outputFormatSelectOpen = true;
-    }, 300); // 테스트용 짧은 딜레이
-  }
-
-  // 드롭다운 닫기 함수들 (지연 처리)
-  function handleTemplateLeave() {
-    // 열기 타이머가 있다면 취소
-    if (templateOpenTimeout) {
-      clearTimeout(templateOpenTimeout);
-      templateOpenTimeout = null;
-    }
-    
-    templateHoverTimeout = setTimeout(() => {
+    } else {
+      // 드롭다운 닫기
       templateSelectOpen = false;
-    }, 150); // 150ms 지연
-  }
-
-  function handleTechniqueLeave() {
-    // 열기 타이머가 있다면 취소
-    if (techniqueOpenTimeout) {
-      clearTimeout(techniqueOpenTimeout);
-      techniqueOpenTimeout = null;
     }
+  }
+  
+  function toggleTechniqueDropdown(event: Event) {
+    event.stopPropagation();
     
-    techniqueHoverTimeout = setTimeout(() => {
+    // 다른 드롭다운들 닫기
+    templateSelectOpen = false;
+    outputFormatSelectOpen = false;
+    
+    if (!techniqueSelectOpen) {
+      const button = event.currentTarget as HTMLElement;
+      const rect = button.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      const dropdownWidth = Math.max(rect.width, 320);
+      const dropdownHeight = 320;
+      
+      let left = rect.left;
+      if (left + dropdownWidth > viewportWidth - 20) {
+        left = viewportWidth - dropdownWidth - 20;
+      }
+      
+      let top = rect.bottom + 8;
+      let isAbove = false;
+      if (top + dropdownHeight > viewportHeight - 20) {
+        top = rect.top - dropdownHeight - 8;
+        isAbove = true;
+      }
+      
+      techniqueButtonRect = {
+        ...rect,
+        left: Math.max(20, left),
+        top: Math.max(20, top),
+        bottom: isAbove ? top + dropdownHeight : top,
+        width: dropdownWidth
+      };
+      techniqueSelectOpen = true;
+    } else {
       techniqueSelectOpen = false;
-    }, 150);
-  }
-
-  function handleOutputFormatLeave() {
-    // 열기 타이머가 있다면 취소
-    if (outputFormatOpenTimeout) {
-      clearTimeout(outputFormatOpenTimeout);
-      outputFormatOpenTimeout = null;
     }
+  }
+  
+  function toggleOutputFormatDropdown(event: Event) {
+    event.stopPropagation();
     
-    outputFormatHoverTimeout = setTimeout(() => {
+    // 다른 드롭다운들 닫기
+    templateSelectOpen = false;
+    techniqueSelectOpen = false;
+    
+    if (!outputFormatSelectOpen) {
+      const button = event.currentTarget as HTMLElement;
+      const rect = button.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      const dropdownWidth = Math.max(rect.width, 250);
+      const dropdownHeight = 200;
+      
+      let left = rect.left;
+      if (left + dropdownWidth > viewportWidth - 20) {
+        left = viewportWidth - dropdownWidth - 20;
+      }
+      
+      let top = rect.bottom + 8;
+      let isAbove = false;
+      if (top + dropdownHeight > viewportHeight - 20) {
+        top = rect.top - dropdownHeight - 8;
+        isAbove = true;
+      }
+      
+      outputFormatButtonRect = {
+        ...rect,
+        left: Math.max(20, left),
+        top: Math.max(20, top),
+        bottom: isAbove ? top + dropdownHeight : top,
+        width: dropdownWidth
+      };
+      outputFormatSelectOpen = true;
+    } else {
       outputFormatSelectOpen = false;
-    }, 150);
-  }
-
-  // 드롭다운 영역 hover 유지 함수들
-  function keepTemplateOpen() {
-    if (templateHoverTimeout) {
-      clearTimeout(templateHoverTimeout);
-      templateHoverTimeout = null;
-    }
-    if (templateOpenTimeout) {
-      clearTimeout(templateOpenTimeout);
-      templateOpenTimeout = null;
     }
   }
 
-  function keepTechniqueOpen() {
-    if (techniqueHoverTimeout) {
-      clearTimeout(techniqueHoverTimeout);
-      techniqueHoverTimeout = null;
-    }
-    if (techniqueOpenTimeout) {
-      clearTimeout(techniqueOpenTimeout);
-      techniqueOpenTimeout = null;
-    }
-  }
-
-  function keepOutputFormatOpen() {
-    if (outputFormatHoverTimeout) {
-      clearTimeout(outputFormatHoverTimeout);
-      outputFormatHoverTimeout = null;
-    }
-    if (outputFormatOpenTimeout) {
-      clearTimeout(outputFormatOpenTimeout);
-      outputFormatOpenTimeout = null;
-    }
-  }
-
-  // 스크롤 시 모든 드롭다운 닫기
+  // 모든 드롭다운 닫기
   function closeAllDropdowns() {
     templateSelectOpen = false;
     techniqueSelectOpen = false;
     outputFormatSelectOpen = false;
-    
-    // 진행 중인 타이머들도 정리
-    if (templateHoverTimeout) {
-      clearTimeout(templateHoverTimeout);
-      templateHoverTimeout = null;
-    }
-    if (techniqueHoverTimeout) {
-      clearTimeout(techniqueHoverTimeout);
-      techniqueHoverTimeout = null;
-    }
-    if (outputFormatHoverTimeout) {
-      clearTimeout(outputFormatHoverTimeout);
-      outputFormatHoverTimeout = null;
-    }
-    
-    // 열기 타이머들도 정리
-    if (templateOpenTimeout) {
-      clearTimeout(templateOpenTimeout);
-      templateOpenTimeout = null;
-    }
-    if (techniqueOpenTimeout) {
-      clearTimeout(techniqueOpenTimeout);
-      techniqueOpenTimeout = null;
-    }
-    if (outputFormatOpenTimeout) {
-      clearTimeout(outputFormatOpenTimeout);
-      outputFormatOpenTimeout = null;
-    }
   }
 
   // 모달 스크롤 제어 함수들
@@ -368,9 +234,9 @@
 
   // 모든 모달 닫기
   function closeAllModals() {
-    showTemplateModal = false;
-    showUserTemplates = false;
     previewTemplate = null;
+    showTemplateModal = false;
+    isEditingTemplate = false;
     enableBodyScroll();
   }
 
@@ -391,27 +257,33 @@
     }
   }
   
-  // 동적 항목 관리 함수들
-  function addItem(field: keyof Omit<PromptFormData, 'templateId'>) {
-    const newItem: DynamicItem = {
-      id: Date.now().toString(),
-      value: ''
-    };
-    formData[field] = [...formData[field], newItem];
+  // 동적 항목 관리 함수들 - 스크롤 이슈 해결
+  async function addItem(fieldKey: keyof Omit<PromptFormData, 'templateId'>) {
+    const newItem = { id: generateId(), value: '' };
+    formData[fieldKey] = [...formData[fieldKey], newItem];
+    onInputChange(); // 입력 변경 시 프롬프트 초기화
     
-    // 새로 추가된 항목의 textarea에 포커스 이동
-    setTimeout(() => {
-      const textareas = document.querySelectorAll(`textarea[data-field="${field}"]`);
-      const lastTextarea = textareas[textareas.length - 1] as HTMLTextAreaElement;
-      if (lastTextarea) {
-        lastTextarea.focus();
+    // DOM 업데이트 후 새로 추가된 항목에 포커스
+    await tick();
+    const newElement = document.querySelector(`textarea[data-item-id="${newItem.id}"]`) as HTMLTextAreaElement;
+    if (newElement) {
+      newElement.focus();
+      // 모바일 환경에서 자동 스크롤
+      if (window.innerWidth <= 768) {
+        setTimeout(() => {
+          newElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }, 100);
       }
-    }, 50);
+    }
   }
   
-  function removeItem(field: keyof Omit<PromptFormData, 'templateId'>, id: string) {
-    // 애니메이션 없이 즉시 제거
-    formData[field] = formData[field].filter(item => item.id !== id);
+  // 항목 삭제 함수
+  function removeItem(fieldKey: keyof Omit<PromptFormData, 'templateId'>, index: number) {
+    formData[fieldKey] = formData[fieldKey].filter((_, i) => i !== index);
+    onInputChange(); // 삭제 후 프롬프트 초기화
   }
   
   function updateItem(field: keyof Omit<PromptFormData, 'templateId'>, id: string, value: string) {
@@ -421,21 +293,29 @@
     }
   }
   
-  // 예시 추가 함수 (빈 항목 우선 채우기)
-  function addExample(field: keyof Omit<PromptFormData, 'templateId'>, example: string) {
-    // 먼저 빈 값인 항목이 있는지 확인
-    const emptyItemIndex = formData[field].findIndex(item => item.value.trim() === '');
+  // 예시 추가 함수
+  async function addExample(fieldKey: keyof Omit<PromptFormData, 'templateId'>, example: string) {
+    const newItem = { id: generateId(), value: example };
+    formData[fieldKey] = [...formData[fieldKey], newItem];
+    onInputChange(); // 입력 변경 시 프롬프트 초기화
     
-    if (emptyItemIndex !== -1) {
-      // 빈 항목이 있으면 그곳에 예시 값 입력
-      formData[field][emptyItemIndex].value = example;
-    } else {
-      // 빈 항목이 없으면 새로운 항목 추가
-      const newItem: DynamicItem = {
-        id: Date.now().toString() + Math.random(),
-        value: example
-      };
-      formData[field] = [...formData[field], newItem];
+    // DOM 업데이트 후 새로 추가된 항목에 포커스
+    await tick();
+    const newElement = document.querySelector(`textarea[data-item-id="${newItem.id}"]`) as HTMLTextAreaElement;
+    if (newElement) {
+      newElement.focus();
+      // 커서를 텍스트 끝으로 이동
+      newElement.setSelectionRange(newElement.value.length, newElement.value.length);
+      
+      // 모바일 환경에서 자동 스크롤
+      if (window.innerWidth <= 768) {
+        setTimeout(() => {
+          newElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }, 100);
+      }
     }
   }
   
@@ -458,30 +338,6 @@
     if (typeof window !== 'undefined') {
       localStorage.setItem('promptTemplates', JSON.stringify(userTemplates));
     }
-  }
-  
-  function saveCurrentAsTemplate() {
-    if (!newTemplateName.trim()) return;
-    
-    const template: UserTemplate = {
-      id: Date.now().toString(),
-      name: newTemplateName.trim(),
-      data: { ...formData },
-      options: { ...promptOptions }, // 현재 프롬프트 옵션도 저장
-      createdAt: new Date().toISOString()
-    };
-    
-    userTemplates = [...userTemplates, template];
-    saveUserTemplates();
-    newTemplateName = '';
-    showTemplateModal = false;
-    enableBodyScroll();
-    
-    toast.success(`템플릿 "${template.name}"이 저장되었습니다`, {
-      duration: 3000,
-      position: 'top-center',
-      style: 'background: #2563eb; color: #ffffff; font-weight: 600; border-radius: 8px; padding: 12px 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);'
-    });
   }
   
   function loadUserTemplate(template: UserTemplate) {
@@ -717,31 +573,34 @@
     // 사용자 템플릿 로드
     loadUserTemplates();
 
-    // 외부 클릭 시 dropdown 닫기 (모달은 버튼으로만 닫기)
+    // 외부 클릭 시 dropdown 닫기
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       
       // 편집 모달이 열려있을 때는 외부 클릭으로 닫지 않음
       if (isEditingTemplate) {
-        return; // 편집 모달은 버튼으로만 닫기
+        return;
       }
       
       // 미리보기 모달이 열려있을 때는 외부 클릭으로 닫지 않음
       if (previewTemplate) {
-        return; // 미리보기 모달은 버튼으로만 닫기
+        return;
       }
       
       // 템플릿 저장 모달은 외부 클릭으로 닫지 않음
       if (showTemplateModal) {
-        return; // 템플릿 저장 모달은 버튼으로만 닫기
+        return;
       }
       
       // 사용자 템플릿 목록은 외부 클릭으로 닫지 않음
       if (showUserTemplates) {
-        return; // 사용자 템플릿 목록은 버튼으로만 닫기
+        return;
       }
       
-      // 드롭다운만 외부 클릭으로 닫기 (기존 로직 유지하지 않음 - hover로 관리)
+      // 드롭다운 영역 외부 클릭 시 모든 드롭다운 닫기
+      if (!target.closest('.custom-select') && !target.closest('.portal-dropdown')) {
+        closeAllDropdowns();
+      }
     };
 
     // 스크롤 시 드롭다운 닫기
@@ -749,12 +608,19 @@
       closeAllDropdowns();
     };
 
+    // 리사이즈 시 드롭다운 닫기
+    const handleResize = () => {
+      closeAllDropdowns();
+    };
+
     document.addEventListener('click', handleClickOutside);
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
     
     return () => {
       document.removeEventListener('click', handleClickOutside);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
       enableBodyScroll(); // 컴포넌트 언마운트 시 스크롤 복원
     };
   });
@@ -946,6 +812,105 @@
     if (!editingTemplateData || fieldKey === 'templateId') return;
     
     editingTemplateData[fieldKey] = editingTemplateData[fieldKey].filter((item: DynamicItem) => item.id !== itemId);
+  }
+
+  // ID 생성 함수
+  function generateId(): string {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  }
+
+  // 템플릿 편집 항목 추가
+  async function addTemplateItem(fieldKey: keyof Omit<PromptFormData, 'templateId'>) {
+    if (!editingTemplateData) return;
+    
+    const newItem = { id: generateId(), value: '' };
+    editingTemplateData[fieldKey] = [...editingTemplateData[fieldKey], newItem];
+    
+    // DOM 업데이트 후 새로 추가된 항목에 포커스
+    await tick();
+    const modalTextarea = document.querySelector(`#template-edit-modal textarea[data-field="${fieldKey}"][data-item-id="${newItem.id}"]`) as HTMLTextAreaElement;
+    if (modalTextarea) {
+      modalTextarea.focus();
+    }
+  }
+
+  // 템플릿 편집 모달 이벤트 핸들러
+  function handleTemplateEditSave(event: CustomEvent<{ template: UserTemplate; data: PromptFormData; options: PromptGenerationOptions }>) {
+    const { template, data, options } = event.detail;
+    
+    // 템플릿 업데이트
+    const updatedTemplate: UserTemplate = {
+      ...template,
+      data,
+      options
+    };
+    
+    // 템플릿 목록에서 업데이트
+    const index = userTemplates.findIndex(t => t.id === template.id);
+    if (index !== -1) {
+      userTemplates[index] = updatedTemplate;
+      previewTemplate = updatedTemplate; // 미리보기도 업데이트
+      saveUserTemplates();
+      
+      toast.success(`템플릿 "${updatedTemplate.name}"이 수정되었습니다`, {
+        duration: 2500,
+        position: 'top-center',
+        style: 'background: #059669; color: #ffffff; font-weight: 600; border-radius: 8px; padding: 12px 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);'
+      });
+    }
+    
+    // 편집 모드 종료
+    closeEditingModal();
+  }
+
+  // 템플릿 저장 모달 이벤트 핸들러
+  function handleTemplateSave(event: CustomEvent<{ name: string }>) {
+    const { name } = event.detail;
+    
+    const template: UserTemplate = {
+      id: Date.now().toString(),
+      name: name,
+      data: { ...formData },
+      options: { ...promptOptions },
+      createdAt: new Date().toISOString()
+    };
+    
+    userTemplates = [...userTemplates, template];
+    saveUserTemplates();
+    newTemplateName = '';
+    showTemplateModal = false;
+    enableBodyScroll();
+    
+    toast.success(`템플릿 "${template.name}"이 저장되었습니다`, {
+      duration: 3000,
+      position: 'top-center',
+      style: 'background: #2563eb; color: #ffffff; font-weight: 600; border-radius: 8px; padding: 12px 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);'
+    });
+  }
+  
+  // 템플릿 저장 모달 닫기 이벤트 핸들러
+  function handleTemplateSaveClose() {
+    showTemplateModal = false;
+    enableBodyScroll();
+  }
+  
+  // 템플릿 미리보기 모달 닫기 이벤트 핸들러
+  function handleTemplatePreviewClose() {
+    previewTemplate = null;
+    enableBodyScroll();
+  }
+  
+  // 템플릿 미리보기에서 편집 이벤트 핸들러
+  function handleTemplatePreviewEdit(event: CustomEvent<{ template: UserTemplate }>) {
+    const { template } = event.detail;
+    startEditingTemplate();
+  }
+  
+  // 템플릿 미리보기에서 불러오기 이벤트 핸들러
+  function handleTemplatePreviewLoad(event: CustomEvent<{ template: UserTemplate }>) {
+    const { template } = event.detail;
+    loadUserTemplate(template);
+    closeAllModals();
   }
 </script>
 
@@ -1548,12 +1513,19 @@
       grid-auto-rows: 1fr;
     }
 
+    /* 그리드 행 높이 균등화 - 데스크톱에서만 적용 */
+    @media (min-width: 1280px) {
+      .grid-auto-rows-fr {
+        grid-auto-rows: 1fr;
+      }
+    }
+
     /* 5W1H 카드 레이아웃 개선 */
     .field-card {
       display: flex;
       flex-direction: column;
-      height: 100%;
-      min-height: 400px; /* 최소 높이 설정 */
+      height: auto; /* 자동 높이로 변경 */
+      min-height: 320px; /* 최소 높이만 설정 */
     }
 
     .field-card-content {
@@ -1571,12 +1543,184 @@
       display: flex;
       flex-direction: column;
     }
+
+    /* 개별 카드 높이 관리 */
+    .field-card-auto-height {
+      height: auto !important;
+      min-height: 320px;
+    }
+
+    /* 모바일 환경 개선 */
+    @media (max-width: 768px) {
+      /* 5W1H 그리드를 모바일에서 1열로 변경 */
+      .mobile-grid-1 {
+        grid-template-columns: 1fr !important;
+      }
+      
+      /* 모바일에서 카드 높이 자동 조정 */
+      .field-card {
+        height: auto !important;
+        min-height: 280px;
+      }
+      
+      /* 그리드 행 높이 자동으로 설정 */
+      .grid-auto-rows-fr {
+        grid-auto-rows: auto !important;
+      }
+      
+      /* 모바일에서 텍스트 크기 조정 */
+      .mobile-text-sm {
+        font-size: 0.875rem;
+      }
+      
+      /* 모바일에서 패딩 줄이기 */
+      .mobile-p-4 {
+        padding: 1rem !important;
+      }
+      
+      .mobile-p-6 {
+        padding: 1.5rem !important;
+      }
+      
+      /* 모바일에서 마진 줄이기 */
+      .mobile-mb-4 {
+        margin-bottom: 1rem !important;
+      }
+      
+      .mobile-mb-6 {
+        margin-bottom: 1.5rem !important;
+      }
+      
+      /* 모바일에서 버튼 크기 조정 */
+      .mobile-btn-sm {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.875rem !important;
+      }
+      
+      /* 모바일에서 드롭다운 너비 조정 */
+      .portal-dropdown {
+        left: 10px !important;
+        right: 10px !important;
+        width: calc(100vw - 20px) !important;
+        max-width: none !important;
+      }
+      
+      /* 모바일에서 히어로 섹션 조정 */
+      .mobile-hero {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+      }
+      
+      /* 모바일에서 제목 크기 조정 */
+      .mobile-title {
+        font-size: 2.5rem !important;
+        line-height: 1.1 !important;
+      }
+      
+      .mobile-subtitle {
+        font-size: 2rem !important;
+      }
+      
+      /* 모바일에서 설명 텍스트 크기 조정 */
+      .mobile-desc {
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+      }
+      
+      /* 모바일에서 스크롤 최적화 */
+      .mobile-scroll-smooth {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* 모바일에서 터치 영역 확대 */
+      .mobile-touch-target {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      /* 모바일에서 폰트 크기 자동 조정 방지 */
+      .mobile-no-zoom {
+        font-size: 16px !important;
+      }
+    }
+
+    /* 모바일 세로 방향 최적화 */
+    @media (max-width: 640px) {
+      /* 더 작은 화면에서 추가 조정 */
+      .sm-mobile-p-3 {
+        padding: 0.75rem !important;
+      }
+      
+      .sm-mobile-text-xs {
+        font-size: 0.75rem !important;
+      }
+      
+      .sm-mobile-gap-2 {
+        gap: 0.5rem !important;
+      }
+      
+      /* 매우 작은 화면에서 제목 크기 더 줄이기 */
+      .sm-mobile-title {
+        font-size: 2rem !important;
+      }
+      
+      .sm-mobile-subtitle {
+        font-size: 1.5rem !important;
+      }
+    }
+
+    /* 터치 디바이스 최적화 */
+    @media (hover: none) and (pointer: coarse) {
+      /* 터치 디바이스에서 호버 효과 비활성화 */
+      .touch-no-hover:hover {
+        transform: none !important;
+        box-shadow: inherit !important;
+      }
+      
+      /* 터치 디바이스에서 버튼 크기 확대 */
+      .touch-btn {
+        min-height: 48px;
+        min-width: 48px;
+      }
+      
+      /* 터치 디바이스에서 텍스트 선택 방지 */
+      .touch-no-select {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+    }
+
+    /* iOS Safari 최적화 */
+    @supports (-webkit-touch-callout: none) {
+      /* iOS에서 100vh 이슈 해결 */
+      .ios-vh-fix {
+        height: -webkit-fill-available;
+      }
+      
+      /* iOS에서 스크롤 바운스 방지 */
+      .ios-no-bounce {
+        overscroll-behavior: none;
+      }
+    }
+
+    /* 접근성 개선 */
+    @media (prefers-reduced-motion: reduce) {
+      /* 모션 감소 설정 시 애니메이션 비활성화 */
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </svelte:head>
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-800 dark:to-gray-900 mobile-scroll-smooth ios-vh-fix">
   <!-- 히어로 섹션 -->
-  <section class="pt-16 pb-12 px-4 relative overflow-hidden">
+  <section class="pt-16 pb-12 px-4 relative overflow-hidden mobile-hero mobile-p-6">
     <!-- 배경 장식 요소들 -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
       <div class="absolute -top-40 -right-32 w-80 h-80 bg-gradient-to-br from-blue-300/15 to-cyan-400/15 rounded-full blur-3xl"></div>
@@ -1585,7 +1729,7 @@
     
     <div class="max-w-5xl mx-auto text-center relative z-10">
       <!-- 메인 아이콘 -->
-      <div class="mb-8 flex justify-center">
+      <div class="mb-8 flex justify-center mobile-mb-6">
         <div class="relative">
           <div class="w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-2xl shadow-2xl flex items-center justify-center transform rotate-3 hover:rotate-6 transition-transform duration-500 p-3">
             <!-- 파비콘과 동일한 디자인 -->
@@ -1638,37 +1782,37 @@
         </div>
       </div>
       
-      <h1 class="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-slate-700 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6 leading-tight">
+      <h1 class="text-4xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-slate-700 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6 leading-tight mobile-title sm-mobile-title mobile-mb-4">
         LLM 프롬프트<br>
-        <span class="text-3xl md:text-5xl lg:text-6xl">최적화 도구</span>
+        <span class="text-3xl md:text-5xl lg:text-6xl mobile-subtitle sm-mobile-subtitle">최적화 도구</span>
       </h1>
       
-      <p class="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+      <p class="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed mobile-desc mobile-mb-6">
         🎯 5W1H전략과 최신 프롬프트 엔지니어링 기법을 활용하여<br>
         <span class="font-semibold text-blue-600 dark:text-blue-400">더 정확하고 유용한 AI 응답</span>을 얻어보세요
       </p>
       
       <!-- 특징 배지들 -->
-      <div class="flex flex-wrap justify-center gap-3 mb-8">
-        <span class="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+      <div class="flex flex-wrap justify-center gap-3 mb-8 mobile-mb-6 sm-mobile-gap-2">
+        <span class="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 shadow-lg mobile-btn-sm sm-mobile-text-xs mobile-touch-target">
           🧠 18가지 AI 기법
         </span>
-        <span class="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+        <span class="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 shadow-lg mobile-btn-sm sm-mobile-text-xs mobile-touch-target">
           📊 실시간 품질 분석
         </span>
-        <span class="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 shadow-lg">
+        <span class="px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50 shadow-lg mobile-btn-sm sm-mobile-text-xs mobile-touch-target">
           ⚡ 즉시 생성
         </span>
       </div>
     </div>
   </section>
 
-  <div class="max-w-7xl mx-auto px-4 pb-12">
+  <div class="max-w-7xl mx-auto px-4 pb-12 mobile-p-4">
     <!-- 육하원칙 입력 (전체 너비 사용) -->
-    <div class="mb-12 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 dark:border-gray-700/30 enhanced-shadow-lg" 
+    <div class="mb-12 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 dark:border-gray-700/30 enhanced-shadow-lg mobile-p-6 mobile-mb-6" 
          transition:fade={{ duration: 300, easing: quintOut }}>
-      <div class="flex items-center gap-4 mb-8">
-        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg flex items-center justify-center">
+      <div class="flex items-center gap-4 mb-8 mobile-mb-6">
+        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg flex items-center justify-center mobile-touch-target">
           <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
@@ -1688,32 +1832,32 @@
       </div>
       
       <!-- 1x6 가로 그리드 레이아웃 -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 grid-auto-rows-fr">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 xl:grid-auto-rows-fr mobile-grid-1 sm-mobile-gap-2">
         {#each fields as field}
-          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/50 hover:border-blue-300/50 dark:hover:border-blue-500/50 transition-all duration-300 card-hover enhanced-shadow group flex flex-col h-full"
-               transition:scale={{ duration: 200, easing: quintOut }}>
-            <div class="flex items-start justify-between mb-4 flex-shrink-0">
-              <label class="flex items-center gap-3 text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 flex-1 min-w-0">
-                <span class="p-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+          <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/50 hover:border-blue-300/50 dark:hover:border-blue-500/50 transition-all duration-300 card-hover enhanced-shadow group flex flex-col field-card field-card-auto-height mobile-p-4 sm-mobile-p-3 touch-no-hover"
+              transition:scale={{ duration: 200, easing: quintOut }}>
+            <div class="flex items-start justify-between mb-4 flex-shrink-0 mobile-mb-4">
+              <label class="flex items-center gap-3 text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 flex-1 min-w-0 mobile-text-sm sm-mobile-text-xs">
+                <span class="p-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300 flex-shrink-0 mobile-touch-target">
                   {@html getFieldIcon(field.key)}
                 </span>
                 <div class="flex flex-col min-w-0 flex-1">
-                  <span class="text-base truncate">{field.label}</span>
+                  <span class="text-base truncate mobile-text-sm">{field.label}</span>
                   {#if field.required}
-                    <span class="text-red-500 text-xs">필수</span>
+                    <span class="text-red-500 text-xs sm-mobile-text-xs">필수</span>
                   {/if}
                 </div>
               </label>
             </div>
 
             <!-- 예시 템플릿 -->
-            <div class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg border border-blue-200/30 dark:border-blue-700/30 flex-shrink-0">
-              <div class="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2">💡 Ex</div>
-              <div class="flex flex-wrap gap-1.5 min-h-[56px] items-start content-start">
+            <div class="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg border border-blue-200/30 dark:border-blue-700/30 flex-shrink-0 field-card-examples mobile-mb-4 sm-mobile-p-3">
+              <div class="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2 sm-mobile-text-xs">💡 Ex</div>
+              <div class="flex flex-wrap gap-1.5 min-h-[56px] items-start content-start sm-mobile-gap-2">
                 {#each field.examples as example}
                   <button
                     on:click={() => addExample(field.key, example)}
-                    class="px-3 py-1.5 text-xs bg-blue-100/70 dark:bg-blue-800/50 text-blue-700 dark:text-blue-200 rounded-md hover:bg-blue-200/70 dark:hover:bg-blue-700/70 transition-colors duration-200 border border-blue-200/50 dark:border-blue-600/50 min-h-[24px] flex items-center whitespace-nowrap max-w-full"
+                    class="px-3 py-1.5 text-xs bg-blue-100/70 dark:bg-blue-800/50 text-blue-700 dark:text-blue-200 rounded-md hover:bg-blue-200/70 dark:hover:bg-blue-700/70 transition-colors duration-200 border border-blue-200/50 dark:border-blue-600/50 min-h-[24px] flex items-center whitespace-nowrap max-w-full touch-no-hover mobile-touch-target sm-mobile-text-xs"
                   >
                     <span class="truncate">{example}</span>
                   </button>
@@ -1721,68 +1865,44 @@
               </div>
             </div>
             
-            <div class="flex-1 flex flex-col">
-              {#each formData[field.key] as item, index (item.id)}
-                <div class="relative group/item mb-3" 
-                     in:slide={{ duration: 200, easing: quintOut }}>
-                  <textarea
-                    bind:value={item.value}
-                    data-field={field.key}
-                    on:input={(e) => {
-                      const target = e.target as HTMLTextAreaElement;
-                      updateItem(field.key, item.id, target.value);
-                      onInputChange(); // 입력 변경 시 프롬프트 초기화
-                    }}
-                    placeholder={field.placeholder}
-                    rows="3"
-                    class="w-full p-4 text-sm border-2 border-gray-200/50 dark:border-gray-600/50 rounded-xl bg-white/70 dark:bg-gray-700/70 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 resize-none max-h-24 overflow-y-auto transition-all duration-300 hover:border-blue-300/70 dark:hover:border-blue-500/70 custom-scrollbar gradient-border"
-                  ></textarea>
-                  <!-- x버튼을 textarea 영역을 넘쳐서 오른쪽 상단 가장자리에 배치 -->
-                  <button
-                    on:click={(e) => {
-                      e.stopPropagation();
-                      removeItem(field.key, item.id);
-                    }}
-                    class="group/del absolute -top-3 -right-3 w-7 h-7 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center transform hover:scale-110 active:scale-95 z-20 border-2 border-white dark:border-gray-800 opacity-0 group-hover/item:opacity-100"
-                    aria-label="삭제"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                  </button>
-                </div>
-              {/each}
+            <!-- 입력 영역 -->
+            <div class="flex-1 flex flex-col field-card-inputs">
+              <div class="space-y-3 flex-1 mobile-scroll-smooth ios-no-bounce">
+                {#each formData[field.key] as item, index (item.id)}
+                  <div class="relative group/item" 
+                       transition:slide={{ duration: 200, easing: quintOut }}>
+                    <textarea
+                      bind:value={item.value}
+                      data-field={field.key}
+                      data-item-id={item.id}
+                      on:input={() => onInputChange()}
+                      placeholder={`${field.label} 입력...`}
+                      rows="3"
+                      class="w-full px-4 py-3 bg-white/70 dark:bg-gray-900/50 border border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-900/60 resize-none overflow-y-auto max-h-32 mobile-no-zoom mobile-touch-target custom-scrollbar"
+                    ></textarea>
+                    <!-- x버튼을 textarea 상단 오른쪽에 겹쳐서 배치 -->
+                    <button
+                      on:click={() => removeItem(field.key, index)}
+                      class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center opacity-0 group-hover/item:opacity-100 focus:opacity-100 hover:scale-110 active:scale-95 z-10 border-2 border-white dark:border-gray-800"
+                      aria-label="{field.label} 항목 삭제"
+                    >
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                {/each}
+              </div>
               
-              <!-- 항목이 1개 이상 있을 때 추가 버튼을 아래에 표시 (textarea 너비와 동일) -->
-              {#if formData[field.key].length > 0}
-                <div class="pt-1 mt-auto">
-                  <button
-                    on:click={() => addItem(field.key)}
-                    class="group/add relative w-full p-3 bg-gradient-to-r from-blue-500/80 to-blue-600/80 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center transform hover:scale-[1.02] active:scale-[0.98] border-2 border-blue-400/50 hover:border-blue-500/70"
-                    aria-label="{field.label} 항목 추가"
-                    transition:scale={{ duration: 150 }}
-                  >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                  </button>
-                </div>
-              {/if}
-              
-              {#if formData[field.key].length === 0}
-                <!-- 빈 상태일 때는 간단한 추가 버튼만 표시 -->
-                <div class="text-center py-6 border-2 border-gray-300/60 dark:border-gray-600/60 rounded-xl hover:border-blue-400/60 dark:hover:border-blue-500/60 transition-all duration-300 magnetic-hover flex-1 flex items-center justify-center">
-                  <button
-                    on:click={() => addItem(field.key)}
-                    class="group/empty relative w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center transform hover:scale-110 active:scale-95 mx-auto pulse-enhanced"
-                    aria-label="{field.label} 항목 추가"
-                  >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                  </button>
-                </div>
-              {/if}
+              <!-- 항목 추가 버튼 -->
+              <button
+                on:click={() => addItem(field.key)}
+                class="{formData[field.key].length > 0 ? 'mt-4' : ''} w-full py-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 dark:hover:from-blue-500/30 dark:hover:to-purple-500/30 text-blue-600 dark:text-blue-400 rounded-xl border-2 border-dashed border-blue-300/50 dark:border-blue-500/50 hover:border-blue-400/70 dark:hover:border-blue-400/70 transition-all duration-300 flex items-center justify-center gap-2 font-medium hover:scale-[1.02] active:scale-[0.98] mobile-touch-target touch-btn touch-no-hover"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+              </button>
             </div>
           </div>
         {/each}
@@ -1904,7 +2024,7 @@
               </svg>
             </button>
           </div>
-          <div class="custom-select" on:mouseenter={handleTemplateHover} on:mouseleave={handleTemplateLeave}>
+          <div class="custom-select" on:click={toggleTemplateDropdown}>
             <button 
               class="relative w-full p-5 pr-16 border-2 border-gray-200/60 dark:border-gray-600/60 rounded-2xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 cursor-pointer transition-all duration-300 hover:border-blue-300/70 dark:hover:border-blue-500/70 shadow-lg hover:shadow-xl text-left flex items-center justify-between group"
             >
@@ -1978,7 +2098,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 기법 선택
               </label>
-              <div class="custom-select" on:mouseenter={handleTechniqueHover} on:mouseleave={handleTechniqueLeave}>
+              <div class="custom-select" on:click={toggleTechniqueDropdown}>
                 <button 
                   class="relative w-full p-4 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-500 shadow-sm hover:shadow-md text-left flex items-center justify-between"
                 >
@@ -2039,7 +2159,7 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 출력 형식
               </label>
-              <div class="custom-select" on:mouseenter={handleOutputFormatHover} on:mouseleave={handleOutputFormatLeave}>
+              <div class="custom-select" on:click={toggleOutputFormatDropdown}>
                 <button 
                   class="relative w-full p-4 pr-12 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-500 shadow-sm hover:shadow-md text-left flex items-center justify-between"
                 >
@@ -2450,229 +2570,24 @@
 </div>
 
 <!-- 템플릿 저장 모달 -->
-{#if showTemplateModal}
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-       transition:fade={{ duration: 200 }}>
-    <div class="save-modal bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full border border-white/20 dark:border-gray-700/30 premium-scrollbar"
-         transition:scale={{ duration: 200, easing: quintOut }}>
-      <div class="rounded-scroll-content space-y-6">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xl font-bold text-gray-800 dark:text-white">
-                템플릿 저장
-              </h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                현재 설정을 템플릿으로 저장
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label for="templateName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            템플릿 이름
-          </label>
-          <input
-            id="templateName"
-            type="text"
-            bind:value={newTemplateName}
-            placeholder="템플릿 이름을 입력하세요"
-            class="w-full px-4 py-3 border-2 border-gray-200/60 dark:border-gray-600/60 rounded-xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
-          />
-        </div>
-
-        <div class="flex gap-3">
-          <button
-            on:click={(e) => {
-              e.stopPropagation();
-              showTemplateModal = false;
-              enableBodyScroll();
-            }}
-            class="flex-1 px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            취소
-          </button>
-          <button
-            on:click={(e) => {
-              e.stopPropagation();
-              saveCurrentAsTemplate();
-            }}
-            disabled={!newTemplateName.trim()}
-            class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            저장
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-{/if}
+<TemplateSaveModal
+  isOpen={showTemplateModal}
+  bind:templateName={newTemplateName}
+  on:close={handleTemplateSaveClose}
+  on:save={handleTemplateSave}
+ />
 
 <!-- 템플릿 미리보기 모달 -->
-{#if previewTemplate}
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-       transition:fade={{ duration: 200 }}>
-    <div class="preview-modal bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-700/30 premium-scrollbar"
-         transition:scale={{ duration: 200, easing: quintOut }}>
-      <div class="space-y-6">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-2xl font-bold text-gray-800 dark:text-white">
-                {previewTemplate.name}
-              </h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                {new Date(previewTemplate.createdAt).toLocaleDateString('ko-KR')} 생성
-              </p>
-            </div>
-          </div>
-          <button
-            on:click={() => {
-              previewTemplate = null;
-              enableBodyScroll();
-            }}
-            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
-          >
-            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <!-- 템플릿 내용 미리보기 -->
-        {#if previewTemplate}
-          <div class="space-y-6">
-            <!-- 5W1H 데이터 -->
-            <div>
-              <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                5W1H 입력 데이터
-              </h4>
-              <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {#each fields as field}
-                  {#if previewTemplate.data[field.key].length > 0}
-                    <div class="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-600/50">
-                      <div class="flex items-center gap-2 mb-3">
-                        <span class="p-1.5 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg text-blue-600 dark:text-blue-400">
-                          {@html getFieldIcon(field.key)}
-                        </span>
-                        <h5 class="font-semibold text-gray-800 dark:text-white">{field.label}</h5>
-                      </div>
-                      <div class="space-y-2">
-                        {#each previewTemplate.data[field.key] as item}
-                          {#if item.value.trim()}
-                            <div class="p-2 bg-white/70 dark:bg-gray-600/70 rounded-lg text-sm text-gray-700 dark:text-gray-300">
-                              {item.value}
-                            </div>
-                          {/if}
-                        {/each}
-                      </div>
-                    </div>
-                  {/if}
-                {/each}
-              </div>
-            </div>
-
-            <!-- 저장된 설정 옵션들 -->
-            {#if previewTemplate.options}
-              <div>
-                <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                  <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  </svg>
-                  저장된 설정
-                </h4>
-                <div class="grid gap-4 md:grid-cols-2">
-                  <!-- 기본 설정 -->
-                  <div class="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-600/50">
-                    <h5 class="font-semibold text-gray-800 dark:text-white mb-3">기본 설정</h5>
-                    <div class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                      <div><span class="font-medium">기법:</span> {techniqueOptions.find(t => t.value === previewTemplate?.options?.technique)?.label || '알 수 없음'}</div>
-                      <div><span class="font-medium">출력 형식:</span> {outputFormatOptions.find(f => f.value === previewTemplate?.options?.outputFormat)?.label || '알 수 없음'}</div>
-                      <div><span class="font-medium">추론 과정:</span> {previewTemplate?.options?.reasoning ? '포함' : '미포함'}</div>
-                      <div><span class="font-medium">단계별 설명:</span> {previewTemplate?.options?.includeStepByStep ? '포함' : '미포함'}</div>
-                      {#if previewTemplate?.options?.expertRole}
-                        <div><span class="font-medium">전문가 역할:</span> {previewTemplate.options.expertRole}</div>
-                      {/if}
-                    </div>
-                  </div>
-
-                  <!-- 고급 설정 -->
-                  <div class="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-600/50">
-                    <h5 class="font-semibold text-gray-800 dark:text-white mb-3">고급 설정</h5>
-                    <div class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                      <div><span class="font-medium">체인 길이:</span> {previewTemplate?.options?.chainLength}단계</div>
-                      <div><span class="font-medium">추론 경로:</span> {previewTemplate?.options?.consistencyPaths}개</div>
-                      <div><span class="font-medium">탐색 깊이:</span> {previewTemplate?.options?.treeDepth}단계</div>
-                      <div><span class="font-medium">품질 게이트:</span> {previewTemplate?.options?.qualityGate}점</div>
-                      <div><span class="font-medium">최대 토큰:</span> {previewTemplate?.options?.maxTokens}개</div>
-                      <div><span class="font-medium">다양성 증대:</span> {previewTemplate?.options?.diversityBoost ? '활성화' : '비활성화'}</div>
-                      <div><span class="font-medium">반복 개선:</span> {previewTemplate?.options?.iterativeRefinement ? '활성화' : '비활성화'}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {/if}
-          </div>
-        {/if}
-
-        <!-- 액션 버튼 -->
-        <div class="flex gap-3 mt-8">
-          <button
-            on:click={() => {
-              previewTemplate = null;
-              enableBodyScroll();
-            }}
-            class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            닫기
-          </button>
-          <button
-            on:click={(e) => {
-              e.stopPropagation();
-              startEditingTemplate();
-            }}
-            class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            편집
-          </button>
-          <button
-            on:click={() => {
-              if (previewTemplate) {
-                loadUserTemplate(previewTemplate);
-                closeAllModals();
-              }
-            }}
-            class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-            </svg>
-            불러오기
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-{/if}
+<TemplatePreviewModal
+  isOpen={!!previewTemplate}
+  template={previewTemplate}
+  {fields}
+  {techniqueOptions}
+  {outputFormatOptions}
+  on:close={handleTemplatePreviewClose}
+  on:edit={handleTemplatePreviewEdit}
+  on:load={handleTemplatePreviewLoad}
+ />
 
 <!-- Portal 드롭다운들 (body에 렌더링) -->
 <!-- 템플릿 선택 드롭다운 -->
@@ -2681,15 +2596,14 @@
     class="portal-dropdown fixed z-[99999] bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 max-h-80 overflow-y-auto"
     style="top: {templateButtonRect.top}px; left: {templateButtonRect.left}px; width: {templateButtonRect.width}px;"
     transition:slide={{ duration: 200, easing: quintOut }}
-    on:mouseenter={keepTemplateOpen}
-    on:mouseleave={handleTemplateLeave}
   >
     {#each templateOptions as group}
       <div class="select-optgroup">{group.categoryName}</div>
       {#each group.templates as template}
         <div 
           class="select-option {formData.templateId === template.id ? 'selected' : ''}"
-          on:click={() => {
+          on:click={(e) => {
+            e.stopPropagation();
             formData.templateId = template.id;
             templateSelectOpen = false;
             // 템플릿 변경 시 생성된 프롬프트 초기화
@@ -2711,13 +2625,12 @@
     class="portal-dropdown fixed z-[99999] bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 max-h-80 overflow-y-auto"
     style="top: {techniqueButtonRect.top}px; left: {techniqueButtonRect.left}px; width: {techniqueButtonRect.width}px;"
     transition:slide={{ duration: 200, easing: quintOut }}
-    on:mouseenter={keepTechniqueOpen}
-    on:mouseleave={handleTechniqueLeave}
   >
     {#each techniqueOptions as option}
       <div 
         class="select-option {promptOptions.technique === option.value ? 'selected' : ''}"
-        on:click={() => {
+        on:click={(e) => {
+          e.stopPropagation();
           promptOptions.technique = option.value;
           techniqueSelectOpen = false;
           // 기법 변경 시 생성된 프롬프트 초기화
@@ -2738,13 +2651,12 @@
     class="portal-dropdown fixed z-[99999] bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 max-h-48 overflow-y-auto"
     style="top: {outputFormatButtonRect.top}px; left: {outputFormatButtonRect.left}px; width: {outputFormatButtonRect.width}px;"
     transition:slide={{ duration: 200, easing: quintOut }}
-    on:mouseenter={keepOutputFormatOpen}
-    on:mouseleave={handleOutputFormatLeave}
   >
     {#each outputFormatOptions as option}
       <div 
         class="select-option {promptOptions.outputFormat === option.value ? 'selected' : ''}"
-        on:click={() => {
+        on:click={(e) => {
+          e.stopPropagation();
           promptOptions.outputFormat = option.value as 'text' | 'json' | 'markdown' | 'structured';
           outputFormatSelectOpen = false;
           // 출력 형식 변경 시 생성된 프롬프트 초기화
@@ -2759,259 +2671,15 @@
   </div>
 {/if}
 
-{#if isEditingTemplate && previewTemplate && editingTemplateData && editingTemplateOptions}
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      transition:fade={{ duration: 200 }}>
-    <div class="edit-modal bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto border border-white/20 dark:border-gray-700/30 premium-scrollbar"
-        transition:scale={{ duration: 200, easing: quintOut }}>
-      <div class="rounded-scroll-content space-y-8">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-2xl font-bold text-gray-800 dark:text-white">
-                템플릿 편집
-              </h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                5W1H 데이터와 설정을 수정할 수 있습니다
-              </p>
-            </div>
-          </div>
-          <button
-            on:click={(e) => {
-              e.stopPropagation();
-              closeEditingModal();
-            }}
-            class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
-          >
-            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="space-y-8">
-          <!-- 템플릿 이름 편집 -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              템플릿 이름
-            </label>
-            <input
-              type="text"
-              bind:value={previewTemplate.name}
-              placeholder="템플릿 이름을 입력하세요"
-              on:click={(e) => e.stopPropagation()}
-              class="w-full px-4 py-3 border-2 border-gray-200/60 dark:border-gray-600/60 rounded-xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
-            />
-          </div>
-
-          <!-- 5W1H 데이터 편집 -->
-          <div>
-            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              5W1H 입력 데이터 편집
-            </h4>
-            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {#each fields as field}
-                <div class="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 dark:border-gray-600/50">
-                  <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                      <span class="p-1.5 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg text-blue-600 dark:text-blue-400">
-                        {@html getFieldIcon(field.key)}
-                      </span>
-                      <h5 class="font-semibold text-gray-800 dark:text-white">{field.label}</h5>
-                    </div>
-                    <button
-                      on:click={(e) => {
-                        e.stopPropagation();
-                        addEditingItem(field.key);
-                      }}
-                      class="w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-colors duration-200"
-                      title="항목 추가"
-                    >
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="space-y-2">
-                    {#each editingTemplateData[field.key] as item, index}
-                      <div class="flex gap-2">
-                        <input
-                          type="text"
-                          bind:value={item.value}
-                          placeholder={field.placeholder}
-                          on:click={(e) => e.stopPropagation()}
-                          class="flex-1 px-3 py-2 bg-white/70 dark:bg-gray-600/70 rounded-lg text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
-                        />
-                        <button
-                          on:click={(e) => {
-                            e.stopPropagation();
-                            removeEditingItem(field.key, item.id);
-                          }}
-                          class="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center justify-center transition-colors duration-200"
-                          title="항목 삭제"
-                        >
-                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                          </svg>
-                        </button>
-                      </div>
-                    {/each}
-                    {#if editingTemplateData[field.key].length === 0}
-                      <div class="text-sm text-gray-500 dark:text-gray-400 italic text-center py-2">
-                        항목이 없습니다. 위의 + 버튼을 눌러 추가하세요.
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-              {/each}
-            </div>
-          </div>
-
-          <!-- 기본 설정 편집 -->
-          <div>
-            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-              기본 설정 편집
-            </h4>
-            <div class="grid gap-4 md:grid-cols-2">
-              <!-- 기법 선택 -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">프롬프트 기법</label>
-                <select
-                  bind:value={editingTemplateOptions.technique}
-                  on:click={(e) => e.stopPropagation()}
-                  class="w-full px-4 py-3 border-2 border-gray-200/60 dark:border-gray-600/60 rounded-xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
-                >
-                  {#each techniqueOptions as option}
-                    <option value={option.value}>{option.label}</option>
-                  {/each}
-                </select>
-              </div>
-
-              <!-- 출력 형식 -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">출력 형식</label>
-                <select
-                  bind:value={editingTemplateOptions.outputFormat}
-                  on:click={(e) => e.stopPropagation()}
-                  class="w-full px-4 py-3 border-2 border-gray-200/60 dark:border-gray-600/60 rounded-xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
-                >
-                  {#each outputFormatOptions as option}
-                    <option value={option.value}>{option.label}</option>
-                  {/each}
-                </select>
-              </div>
-
-              <!-- 전문가 역할 -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">전문가 역할 (선택사항)</label>
-                <input
-                  type="text"
-                  bind:value={editingTemplateOptions.expertRole}
-                  placeholder="예: 마케팅 전문가, 데이터 분석가"
-                  on:click={(e) => e.stopPropagation()}
-                  class="w-full px-4 py-3 border-2 border-gray-200/60 dark:border-gray-600/60 rounded-xl bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
-                />
-              </div>
-
-              <!-- 최대 토큰 -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  최대 토큰 수: {editingTemplateOptions.maxTokens}
-                </label>
-                <input
-                  type="range"
-                  bind:value={editingTemplateOptions.maxTokens}
-                  min="100"
-                  max="4000"
-                  step="100"
-                  on:click={(e) => e.stopPropagation()}
-                  class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-600"
-                />
-              </div>
-            </div>
-
-            <!-- 체크박스 옵션들 -->
-            <div class="grid gap-4 md:grid-cols-2 mt-4">
-              <label class="flex items-center gap-3 cursor-pointer" on:click={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  bind:checked={editingTemplateOptions.reasoning}
-                  on:click={(e) => e.stopPropagation()}
-                  class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">추론 과정 포함</span>
-              </label>
-
-              <label class="flex items-center gap-3 cursor-pointer" on:click={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  bind:checked={editingTemplateOptions.includeStepByStep}
-                  on:click={(e) => e.stopPropagation()}
-                  class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">단계별 설명 포함</span>
-              </label>
-
-              <label class="flex items-center gap-3 cursor-pointer" on:click={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  bind:checked={editingTemplateOptions.diversityBoost}
-                  on:click={(e) => e.stopPropagation()}
-                  class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">다양성 증대</span>
-              </label>
-
-              <label class="flex items-center gap-3 cursor-pointer" on:click={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  bind:checked={editingTemplateOptions.iterativeRefinement}
-                  on:click={(e) => e.stopPropagation()}
-                  class="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">반복 개선</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <!-- 액션 버튼 -->
-        <div class="flex gap-3 mt-8">
-          <button
-            on:click={(e) => {
-              e.stopPropagation();
-              closeEditingModal();
-            }}
-            class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl font-semibold transition-colors duration-200"
-          >
-            취소
-          </button>
-          <button
-            on:click={(e) => {
-              e.stopPropagation();
-              saveEditedTemplate();
-            }}
-            class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            변경사항 저장
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-{/if}
+<!-- 템플릿 편집 모달 -->
+<TemplateEditModal
+  isOpen={isEditingTemplate}
+  template={previewTemplate}
+  editingData={editingTemplateData}
+  editingOptions={editingTemplateOptions}
+  {fields}
+  {techniqueOptions}
+  {outputFormatOptions}
+  on:close={closeEditingModal}
+  on:save={handleTemplateEditSave}
+/>
