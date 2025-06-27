@@ -75,13 +75,26 @@
     min-height: 100vh;
     min-height: calc(var(--vh, 1vh) * 100);
     min-height: -webkit-fill-available;
+    /* iOS에서 푸터가 항상 표시되도록 강제 */
+    display: flex;
+    flex-direction: column;
   }
   
   /* 메인 콘텐츠 영역 안전 영역 확보 */
   .main-content-safe {
+    flex: 1 1 auto; /* flex-grow, flex-shrink, flex-basis 명시적 설정 */
     min-height: 0; /* flex-1이 제대로 작동하도록 */
     overflow-y: auto;
     width: 100%;
+    /* iOS에서 콘텐츠가 부족해도 푸터가 하단에 고정되도록 */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* 실제 콘텐츠 래퍼 */
+  .content-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
   }
   
   /* iOS Safari 추가 최적화 */
@@ -89,11 +102,21 @@
     .ios-viewport-fix {
       min-height: calc(var(--vh, 1vh) * 100);
       min-height: -webkit-fill-available;
+      /* iOS에서 더 안정적인 레이아웃 */
+      height: 100vh;
+      height: calc(var(--vh, 1vh) * 100);
+      height: -webkit-fill-available;
     }
     
     /* iOS에서 주소창이 숨겨질 때 레이아웃 안정성 확보 */
     .main-content-safe {
       padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    
+    /* iOS에서 푸터 고정 */
+    .footer-fixed {
+      position: relative;
+      margin-top: auto;
     }
   }
   
@@ -102,12 +125,21 @@
     .ios-viewport-fix {
       /* 모바일에서 더 안정적인 높이 계산 */
       min-height: calc(var(--vh, 1vh) * 100);
+      /* iOS에서 푸터가 항상 보이도록 강제 높이 설정 */
+      height: 100vh;
+      height: calc(var(--vh, 1vh) * 100);
     }
     
     .main-content-safe {
       padding-bottom: max(env(safe-area-inset-bottom, 0), 1rem);
       /* 모바일에서 가로 스크롤 방지 */
       overflow-x: hidden;
+    }
+    
+    /* 모바일에서 푸터가 항상 표시되도록 */
+    .footer-fixed {
+      flex-shrink: 0;
+      margin-top: auto;
     }
   }
   
@@ -117,6 +149,12 @@
       padding-top: 0.5rem;
       padding-bottom: 0.5rem;
     }
+    
+    /* 키보드가 올라와도 푸터 유지 */
+    .footer-fixed {
+      position: relative;
+      margin-top: auto;
+    }
   }
   
   /* 매우 작은 화면에서 추가 최적화 */
@@ -124,6 +162,21 @@
     .main-content-safe {
       padding-top: 0.25rem;
       padding-bottom: 0.25rem;
+    }
+  }
+  
+  /* iOS에서 콘텐츠가 적을 때도 푸터 하단 고정 */
+  @media (max-width: 768px) and (-webkit-min-device-pixel-ratio: 2) {
+    .ios-viewport-fix {
+      min-height: 100vh !important;
+      min-height: calc(var(--vh, 1vh) * 100) !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    
+    .footer-fixed {
+      margin-top: auto !important;
+      flex-shrink: 0 !important;
     }
   }
 </style>
@@ -138,7 +191,7 @@
     style: 'background: #363636; color: #fff; border-radius: 12px; padding: 16px; font-weight: 600; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);'
   }}
 />
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors flex flex-col ios-viewport-fix">
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors ios-viewport-fix">
   <!-- 헤더 -->
   <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
     <div class="container mx-auto px-4 py-4">
@@ -219,12 +272,14 @@
   </header>
   
   <!-- 메인 컨텐츠 -->
-  <main class="flex-1 container mx-auto px-4 py-8 main-content-safe">
-    <slot />
+  <main class="main-content-safe">
+    <div class="content-wrapper container mx-auto px-4 py-8">
+      <slot />
+    </div>
   </main>
   
   <!-- 푸터 -->
-  <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+  <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 footer-fixed">
     <div class="container mx-auto px-4 py-6">
       <div class="text-center text-gray-600 dark:text-gray-400">
         <p class="text-sm">

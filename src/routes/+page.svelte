@@ -295,26 +295,55 @@
   
   // 예시 추가 함수
   async function addExample(fieldKey: keyof Omit<PromptFormData, 'templateId'>, example: string) {
-    const newItem = { id: generateId(), value: example };
-    formData[fieldKey] = [...formData[fieldKey], newItem];
-    onInputChange(); // 입력 변경 시 프롬프트 초기화
+    // 먼저 빈 항목이 있는지 확인
+    const emptyItemIndex = formData[fieldKey].findIndex(item => item.value.trim() === '');
     
-    // DOM 업데이트 후 새로 추가된 항목에 포커스
-    await tick();
-    const newElement = document.querySelector(`textarea[data-item-id="${newItem.id}"]`) as HTMLTextAreaElement;
-    if (newElement) {
-      newElement.focus();
-      // 커서를 텍스트 끝으로 이동
-      newElement.setSelectionRange(newElement.value.length, newElement.value.length);
+    if (emptyItemIndex !== -1) {
+      // 빈 항목이 있으면 해당 항목에 값 설정
+      formData[fieldKey][emptyItemIndex].value = example;
+      onInputChange(); // 입력 변경 시 프롬프트 초기화
       
-      // 모바일 환경에서 자동 스크롤
-      if (window.innerWidth <= 768) {
-        setTimeout(() => {
-          newElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-        }, 100);
+      // DOM 업데이트 후 해당 항목에 포커스
+      await tick();
+      const existingElement = document.querySelector(`textarea[data-item-id="${formData[fieldKey][emptyItemIndex].id}"]`) as HTMLTextAreaElement;
+      if (existingElement) {
+        existingElement.focus();
+        // 커서를 텍스트 끝으로 이동
+        existingElement.setSelectionRange(existingElement.value.length, existingElement.value.length);
+        
+        // 모바일 환경에서 자동 스크롤
+        if (window.innerWidth <= 768) {
+          setTimeout(() => {
+            existingElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }, 100);
+        }
+      }
+    } else {
+      // 빈 항목이 없으면 새 항목 생성
+      const newItem = { id: generateId(), value: example };
+      formData[fieldKey] = [...formData[fieldKey], newItem];
+      onInputChange(); // 입력 변경 시 프롬프트 초기화
+      
+      // DOM 업데이트 후 새로 추가된 항목에 포커스
+      await tick();
+      const newElement = document.querySelector(`textarea[data-item-id="${newItem.id}"]`) as HTMLTextAreaElement;
+      if (newElement) {
+        newElement.focus();
+        // 커서를 텍스트 끝으로 이동
+        newElement.setSelectionRange(newElement.value.length, newElement.value.length);
+        
+        // 모바일 환경에서 자동 스크롤
+        if (window.innerWidth <= 768) {
+          setTimeout(() => {
+            newElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }, 100);
+        }
       }
     }
   }
