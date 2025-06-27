@@ -80,6 +80,44 @@ Unix/Linux/macOS:
 ./deploy.sh
 ```
 
+## SEO 및 검색엔진 최적화
+
+### 포함된 SEO 기능
+- **robots.txt**: 모든 검색엔진 크롤링 허용
+- **sitemap.xml**: 사이트 구조 정보 제공
+- **메타태그**: 한국어 최적화된 SEO 메타태그
+- **구조화된 데이터**: JSON-LD 형식의 Schema.org 마크업
+- **Open Graph**: 소셜 미디어 공유 최적화
+- **Twitter Cards**: 트위터 공유 최적화
+
+### 검색엔진 등록 방법
+
+#### 1. 구글 서치 콘솔
+1. [Google Search Console](https://search.google.com/search-console) 접속
+2. 사이트 추가: `https://make-opti-prompt.pages.dev`
+3. HTML 파일 다운로드 후 `static/` 폴더에 업로드
+4. 또는 `src/app.html`의 `google-site-verification` 메타태그에 인증 코드 입력
+
+#### 2. 네이버 웹마스터도구
+1. [네이버 웹마스터도구](https://searchadvisor.naver.com/) 접속
+2. 사이트 추가: `https://make-opti-prompt.pages.dev`
+3. HTML 파일 다운로드 후 `static/` 폴더에 업로드
+4. 또는 `src/app.html`의 `naver-site-verification` 메타태그에 인증 코드 입력
+
+#### 3. 다음 검색등록
+1. [다음 검색등록](https://register.search.daum.net/index.daum) 접속
+2. 사이트 URL 입력: `https://make-opti-prompt.pages.dev`
+3. 사이트 정보 입력 및 등록
+
+#### 4. 빙 웹마스터도구
+1. [Bing Webmaster Tools](https://www.bing.com/webmasters) 접속
+2. 사이트 추가: `https://make-opti-prompt.pages.dev`
+3. 사이트 인증 완료
+
+### 사이트맵 제출
+각 검색엔진 웹마스터도구에서 사이트맵 URL 제출:
+- 사이트맵 URL: `https://make-opti-prompt.pages.dev/sitemap.xml`
+
 ## 프로젝트 구조
 
 ```
@@ -94,6 +132,11 @@ src/
 │   ├── stores/          # Svelte 스토어
 │   └── utils/           # 유틸리티 함수
 └── app.html             # HTML 템플릿
+static/
+├── robots.txt           # 검색엔진 크롤링 설정
+├── sitemap.xml          # 사이트맵
+├── favicon.svg          # 파비콘 파일들
+└── site.webmanifest     # PWA 매니페스트
 ```
 
 ## 기술 스택

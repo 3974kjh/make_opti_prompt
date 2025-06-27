@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+
+# 특정 검색엔진 봇 허용
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: NaverBot
+Allow: /
+
+User-agent: Yeti
+Allow: /
+
+User-agent: DaumBot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+# 크롤링 속도 조절 (1초 간격)
+Crawl-delay: 1
+
+# 사이트맵 위치 지정 (배포 후 실제 도메인으로 변경 필요)
+Sitemap: https://make-opti-prompt.pages.dev/sitemap.xml 
