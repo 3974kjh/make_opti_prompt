@@ -626,12 +626,17 @@
       }
     };
 
-    // 스크롤 시 드롭다운 닫기 (단, 드롭다운 내부 스크롤 제외)
+    // 스크롤 시 드롭다운 닫기 - 웹과 모바일 환경 구분하여 처리
     const handleScroll = (event: Event) => {
       const target = event.target as Element;
       
       // 드롭다운 내부 스크롤이면 닫지 않음
       if (target.closest('.portal-dropdown')) {
+        return;
+      }
+      
+      // 모달이 열려있을 때는 스크롤로 닫지 않음
+      if (isEditingTemplate || previewTemplate || showTemplateModal || showUserTemplates) {
         return;
       }
       
@@ -641,9 +646,53 @@
       }
     };
 
-    // 윈도우 스크롤 시 드롭다운 닫기 (전역 스크롤)
-    const handleWindowScroll = () => {
+    // 윈도우 스크롤 시 드롭다운 닫기 (전역 스크롤) - 웹 환경에서 더 적극적으로 처리
+    const handleWindowScroll = (event: Event) => {
+      // 모달이 열려있을 때는 스크롤로 닫지 않음
+      if (isEditingTemplate || previewTemplate || showTemplateModal || showUserTemplates) {
+        return;
+      }
+      
       // 어떤 드롭다운이라도 열려있으면 닫기
+      if (templateSelectOpen || techniqueSelectOpen || outputFormatSelectOpen) {
+        closeAllDropdowns();
+      }
+    };
+
+    // 문서 전체 스크롤 이벤트 핸들러 (웹에서 더 정확한 감지)
+    const handleDocumentScroll = (event: Event) => {
+      // 모달이 열려있을 때는 스크롤로 닫지 않음
+      if (isEditingTemplate || previewTemplate || showTemplateModal || showUserTemplates) {
+        return;
+      }
+      
+      // 드롭다운이 열려있을 때만 체크
+      if (templateSelectOpen || techniqueSelectOpen || outputFormatSelectOpen) {
+        // 스크롤 이벤트가 드롭다운 내부에서 발생했는지 확인
+        const activeDropdown = document.querySelector('.portal-dropdown');
+        if (activeDropdown && event.target && activeDropdown.contains(event.target as Node)) {
+          return;
+        }
+        
+        closeAllDropdowns();
+      }
+    };
+
+    // 페이지의 모든 스크롤 가능한 요소에서 스크롤 이벤트 감지
+    const handleAnyScroll = (event: Event) => {
+      // 모달이 열려있을 때는 스크롤로 닫지 않음
+      if (isEditingTemplate || previewTemplate || showTemplateModal || showUserTemplates) {
+        return;
+      }
+      
+      const target = event.target as Element;
+      
+      // 드롭다운 내부 스크롤이면 닫지 않음
+      if (target && target.closest('.portal-dropdown')) {
+        return;
+      }
+      
+      // 드롭다운이 열려있으면 닫기
       if (templateSelectOpen || techniqueSelectOpen || outputFormatSelectOpen) {
         closeAllDropdowns();
       }
@@ -654,14 +703,36 @@
       closeAllDropdowns();
     };
 
+    // 키보드 이벤트 (ESC 키로 드롭다운 닫기)
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeAllDropdowns();
+      }
+    };
+
     // 이벤트 리스너 등록
     document.addEventListener('click', handleClickOutside);
     document.addEventListener('touchend', handleClickOutside); // 터치 이벤트도 처리
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: true });
-    document.addEventListener('scroll', handleScroll, { passive: true, capture: true }); // capture 추가로 더 정확한 감지
-    window.addEventListener('scroll', handleWindowScroll, { passive: true }); // 윈도우 스크롤 추가
+    
+    // 다양한 스크롤 이벤트 등록 (웹 환경에서 더 포괄적으로)
+    document.addEventListener('scroll', handleScroll, { passive: true, capture: true }); // capture로 더 정확한 감지
+    window.addEventListener('scroll', handleWindowScroll, { passive: true }); // 윈도우 스크롤
+    document.addEventListener('scroll', handleDocumentScroll, { passive: true }); // 문서 스크롤 (중복이지만 더 확실하게)
+    
+    // 모든 스크롤 가능한 요소에서 스크롤 이벤트 감지 (웹에서 추가)
+    document.body.addEventListener('scroll', handleAnyScroll, { passive: true });
+    document.documentElement.addEventListener('scroll', handleAnyScroll, { passive: true });
+    
     window.addEventListener('resize', handleResize);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // 스크롤 가능한 모든 요소에 이벤트 리스너 추가 (동적으로)
+    const scrollableElements = document.querySelectorAll('[style*="overflow"], .overflow-auto, .overflow-scroll, .overflow-y-auto, .overflow-x-auto');
+    scrollableElements.forEach(element => {
+      element.addEventListener('scroll', handleAnyScroll, { passive: true });
+    });
     
     return () => {
       document.removeEventListener('click', handleClickOutside);
@@ -670,7 +741,17 @@
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('scroll', handleScroll, true); // capture 제거 시에도 true 필요
       window.removeEventListener('scroll', handleWindowScroll);
+      document.removeEventListener('scroll', handleDocumentScroll);
+      document.body.removeEventListener('scroll', handleAnyScroll);
+      document.documentElement.removeEventListener('scroll', handleAnyScroll);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('keydown', handleKeyDown);
+      
+      // 동적으로 추가된 스크롤 이벤트 리스너 제거
+      scrollableElements.forEach(element => {
+        element.removeEventListener('scroll', handleAnyScroll);
+      });
+      
       clearTimeout(scrollTimeout);
       enableBodyScroll(); // 컴포넌트 언마운트 시 스크롤 복원
     };

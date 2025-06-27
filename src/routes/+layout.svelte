@@ -20,6 +20,38 @@
         updateTheme();
       }
     });
+
+    // iOS Safari viewport 높이 동적 조정
+    function setViewportHeight() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+
+    // 초기 설정
+    setViewportHeight();
+
+    // 리사이즈 및 오리엔테이션 변경 시 재계산
+    window.addEventListener('resize', setViewportHeight);
+    window.addEventListener('orientationchange', () => {
+      // 오리엔테이션 변경 후 약간의 지연을 두고 재계산
+      setTimeout(setViewportHeight, 100);
+    });
+
+    // iOS에서 주소창 숨김/표시 감지
+    let lastHeight = window.innerHeight;
+    window.addEventListener('resize', () => {
+      const currentHeight = window.innerHeight;
+      if (Math.abs(currentHeight - lastHeight) > 100) {
+        // 높이 변화가 100px 이상이면 주소창 변화로 간주
+        setTimeout(setViewportHeight, 300);
+      }
+      lastHeight = currentHeight;
+    });
+
+    // 정리 함수
+    return () => {
+      window.removeEventListener('resize', setViewportHeight);
+    };
   });
   
   function updateTheme() {
@@ -37,6 +69,65 @@
   }
 </script>
 
+<style>
+  /* iOS Safari viewport height 이슈 해결 */
+  .ios-viewport-fix {
+    min-height: 100vh;
+    min-height: calc(var(--vh, 1vh) * 100);
+    min-height: -webkit-fill-available;
+  }
+  
+  /* 메인 콘텐츠 영역 안전 영역 확보 */
+  .main-content-safe {
+    min-height: 0; /* flex-1이 제대로 작동하도록 */
+    overflow-y: auto;
+    width: 100%;
+  }
+  
+  /* iOS Safari 추가 최적화 */
+  @supports (-webkit-touch-callout: none) {
+    .ios-viewport-fix {
+      min-height: calc(var(--vh, 1vh) * 100);
+      min-height: -webkit-fill-available;
+    }
+    
+    /* iOS에서 주소창이 숨겨질 때 레이아웃 안정성 확보 */
+    .main-content-safe {
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+  }
+  
+  /* 모바일 환경에서 추가 안전 마진 */
+  @media (max-width: 768px) {
+    .ios-viewport-fix {
+      /* 모바일에서 더 안정적인 높이 계산 */
+      min-height: calc(var(--vh, 1vh) * 100);
+    }
+    
+    .main-content-safe {
+      padding-bottom: max(env(safe-area-inset-bottom, 0), 1rem);
+      /* 모바일에서 가로 스크롤 방지 */
+      overflow-x: hidden;
+    }
+  }
+  
+  /* 키보드가 올라올 때 레이아웃 조정 */
+  @media (max-height: 500px) {
+    .main-content-safe {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+  }
+  
+  /* 매우 작은 화면에서 추가 최적화 */
+  @media (max-height: 400px) {
+    .main-content-safe {
+      padding-top: 0.25rem;
+      padding-bottom: 0.25rem;
+    }
+  }
+</style>
+
 <!-- Toaster 컴포넌트 -->
 <Toaster 
   position="top-center"
@@ -47,7 +138,7 @@
     style: 'background: #363636; color: #fff; border-radius: 12px; padding: 16px; font-weight: 600; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);'
   }}
 />
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors flex flex-col">
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors flex flex-col ios-viewport-fix">
   <!-- 헤더 -->
   <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
     <div class="container mx-auto px-4 py-4">
@@ -128,7 +219,7 @@
   </header>
   
   <!-- 메인 컨텐츠 -->
-  <main class="flex-1 container mx-auto px-4 py-8">
+  <main class="flex-1 container mx-auto px-4 py-8 main-content-safe">
     <slot />
   </main>
   
