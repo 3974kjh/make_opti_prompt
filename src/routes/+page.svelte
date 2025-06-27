@@ -1841,6 +1841,84 @@
       .mobile-no-zoom {
         font-size: 16px !important;
       }
+      
+      /* 모바일에서 메인 그리드 레이아웃 조정 */
+      .mobile-main-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+      }
+      
+      /* 모바일에서 프롬프트 미리보기 영역 개선 */
+      .mobile-prompt-preview {
+        max-height: 300px !important;
+        overflow-y: auto !important;
+      }
+      
+      /* 모바일에서 품질 분석 그리드 개선 */
+      .mobile-quality-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem !important;
+      }
+      
+      /* 모바일에서 버튼 그룹 개선 */
+      .mobile-btn-group {
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+      }
+      
+      /* 모바일에서 생성 버튼 크기 조정 */
+      .mobile-generate-btn {
+        padding: 1rem 2rem !important;
+        font-size: 1rem !important;
+        border-radius: 1rem !important;
+      }
+      
+      /* 모바일에서 품질 점수 표시 개선 */
+      .mobile-quality-score {
+        font-size: 1.5rem !important;
+      }
+      
+      /* 모바일에서 토큰 수 표시 개선 */
+      .mobile-token-badge {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.75rem !important;
+      }
+      
+      /* 모바일에서 스크롤 영역 최적화 */
+      .mobile-scroll-area {
+        max-height: 250px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      
+      /* 모바일에서 카드 간격 조정 */
+      .mobile-card-spacing {
+        margin-bottom: 1rem !important;
+      }
+      
+      /* 모바일에서 텍스트 영역 최적화 */
+      .mobile-textarea {
+        min-height: 80px !important;
+        font-size: 16px !important; /* iOS 줌 방지 */
+      }
+      
+      /* 모바일에서 프롬프트 결과 영역 최적화 */
+      .mobile-prompt-result {
+        padding: 1rem !important;
+        border-radius: 1rem !important;
+      }
+      
+      /* 모바일에서 품질 메트릭 카드 최적화 */
+      .mobile-metric-card {
+        padding: 0.75rem !important;
+        text-align: center !important;
+      }
+      
+      /* 모바일에서 제안 사항 리스트 최적화 */
+      .mobile-suggestions {
+        font-size: 0.875rem !important;
+        line-height: 1.4 !important;
+      }
     }
 
     /* 모바일 세로 방향 최적화 */
@@ -1911,6 +1989,29 @@
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* 프롬프트 스크롤 영역 최적화 (웹 + 모바일) */
+    .prompt-scroll-area {
+      max-height: 24rem; /* 384px */
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* 데스크톱에서 더 큰 높이 허용 */
+    @media (min-width: 1024px) {
+      .prompt-scroll-area {
+        max-height: 32rem; /* 512px */
+      }
+    }
+
+    /* 큰 화면에서 더욱 넉넉한 높이 */
+    @media (min-width: 1280px) {
+      .prompt-scroll-area {
+        max-height: 40rem; /* 640px */
       }
     }
   </style>
@@ -2076,7 +2177,7 @@
                       on:input={() => onInputChange()}
                       placeholder={`${field.label} 입력...`}
                     rows="3"
-                      class="w-full px-4 py-3 bg-white/70 dark:bg-gray-900/50 border border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-900/60 resize-none overflow-y-auto max-h-32 mobile-no-zoom mobile-touch-target custom-scrollbar"
+                      class="w-full px-4 py-3 bg-white/70 dark:bg-gray-900/50 border border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-900/60 resize-none overflow-y-auto max-h-32 mobile-no-zoom mobile-touch-target custom-scrollbar mobile-textarea"
                   ></textarea>
                     <!-- x버튼을 textarea 상단 오른쪽에 겹쳐서 배치 -->
                   <button
@@ -2107,9 +2208,9 @@
       </div>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-8">
+    <div class="grid lg:grid-cols-2 gap-8 mobile-main-grid mobile-card-spacing">
       <!-- 왼쪽: 입력 폼 -->
-      <div class="space-y-6">
+      <div class="space-y-6 mobile-card-spacing">
       <!-- 사용자 템플릿 관리 -->
         <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/30 dark:border-gray-700/40 enhanced-shadow card-hover"
              transition:fade={{ duration: 300, delay: 300, easing: quintOut }}>
@@ -2571,29 +2672,29 @@
       </div>
 
       <!-- 오른쪽: 프롬프트 미리보기 및 품질 분석 -->
-      <div class="space-y-6">
+      <div class="space-y-6 mobile-card-spacing">
         
         {#if showPreview}
           <!-- 생성된 프롬프트 -->
-          <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/30 dark:border-gray-700/40 enhanced-shadow card-hover">
-            <div class="flex items-center justify-between mb-6">
-              <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg flex items-center justify-center">
+          <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/30 dark:border-gray-700/40 enhanced-shadow card-hover mobile-prompt-result mobile-p-4">
+            <div class="flex items-center justify-between mb-6 mobile-mb-4">
+              <div class="flex items-center gap-4 flex-1 min-w-0">
+                <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg flex items-center justify-center mobile-touch-target">
                   <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                   </svg>
                 </div>
-                <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mobile-text-sm truncate">
                   Generated Prompt
                 </h2>
               </div>
-              <div class="flex gap-3">
-                <span class="px-4 py-2 bg-blue-100/80 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-xl text-sm font-semibold backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50">
+              <div class="flex gap-2 mobile-btn-group">
+                <span class="px-3 py-2 bg-blue-100/80 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-xl text-sm font-semibold backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50 mobile-token-badge">
                   {estimatedTokens} 토큰
                 </span>
                 <button
                   on:click={clearPrompt}
-                  class="group/clear relative w-10 h-10 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center"
+                  class="group/clear relative w-10 h-10 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center mobile-touch-target touch-no-hover"
                   aria-label="프롬프트 초기화"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2602,42 +2703,42 @@
                 </button>
                 <button
                   on:click={copyPrompt}
-                  class="group/copy relative w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center pulse-enhanced"
+                  class="group/copy relative w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center pulse-enhanced mobile-touch-target touch-no-hover"
                   aria-label="프롬프트 복사"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 002 2v8a2 2 0 002 2z"></path>
                   </svg>
                 </button>
               </div>
             </div>
             
-            <div class="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-6 border-l-4 border-blue-500 max-h-96 overflow-y-auto premium-scrollbar">
+            <div class="bg-gray-50/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-6 border-l-4 border-blue-500 prompt-scroll-area mobile-prompt-preview mobile-scroll-area premium-scrollbar mobile-p-4">
               <div class="h-full">
-                <pre class="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">{generatedPrompt}</pre>
+                <pre class="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed mobile-text-sm">{generatedPrompt}</pre>
               </div>
             </div>
           </div>
 
           <!-- 품질 분석 -->
           {#if qualityMetrics}
-            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/30 dark:border-gray-700/40 enhanced-shadow card-hover">
-              <div class="flex items-center gap-4 mb-6">
-                <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center">
+            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl p-8 border border-white/30 dark:border-gray-700/40 enhanced-shadow card-hover mobile-prompt-result mobile-p-4">
+              <div class="flex items-center gap-4 mb-6 mobile-mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center mobile-touch-target">
                   <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                   </svg>
                 </div>
-                <h2 class="text-xl font-bold text-gray-800 dark:text-white">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mobile-text-sm">
                   Quality Analysis
                 </h2>
               </div>
               
               <!-- 전체 점수 -->
-              <div class="mb-6">
+              <div class="mb-6 mobile-mb-4">
                 <div class="flex items-center justify-between mb-2">
-                  <span class="text-lg font-semibold text-gray-700 dark:text-gray-300">전체 점수</span>
-                  <span class="text-2xl font-bold {
+                  <span class="text-lg font-semibold text-gray-700 dark:text-gray-300 mobile-text-sm">전체 점수</span>
+                  <span class="text-2xl font-bold mobile-quality-score {
                     qualityMetrics.level === 'excellent' ? 'text-green-600' :
                     qualityMetrics.level === 'high' ? 'text-blue-600' :
                     qualityMetrics.level === 'medium' ? 'text-yellow-600' : 'text-red-600'
@@ -2658,31 +2759,31 @@
               </div>
 
               <!-- 세부 점수 (2x2 그리드로 변경) -->
-              <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div class="text-xl font-bold text-blue-600">{Math.round(qualityMetrics.completeness * 100) / 100}</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400">완성도</div>
+              <div class="grid grid-cols-2 gap-3 mb-6 mobile-quality-grid mobile-mb-4">
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mobile-metric-card">
+                  <div class="text-xl font-bold text-blue-600 mobile-text-sm">{Math.round(qualityMetrics.completeness * 100) / 100}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 sm-mobile-text-xs">완성도</div>
                 </div>
-                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div class="text-xl font-bold text-green-600">{Math.round(qualityMetrics.clarity * 100) / 100}</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400">명확성</div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mobile-metric-card">
+                  <div class="text-xl font-bold text-green-600 mobile-text-sm">{Math.round(qualityMetrics.clarity * 100) / 100}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 sm-mobile-text-xs">명확성</div>
                 </div>
-                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div class="text-xl font-bold text-purple-600">{Math.round(qualityMetrics.specificity * 100) / 100}</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400">구체성</div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mobile-metric-card">
+                  <div class="text-xl font-bold text-purple-600 mobile-text-sm">{Math.round(qualityMetrics.specificity * 100) / 100}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 sm-mobile-text-xs">구체성</div>
                 </div>
-                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <div class="text-xl font-bold text-orange-600">{Math.round(qualityMetrics.structure * 100) / 100}</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400">구조화</div>
+                <div class="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mobile-metric-card">
+                  <div class="text-xl font-bold text-orange-600 mobile-text-sm">{Math.round(qualityMetrics.structure * 100) / 100}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 sm-mobile-text-xs">구조화</div>
                 </div>
               </div>
 
               <!-- 적용된 기법 -->
-              <div class="mb-4">
-                <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">적용된 기법</h3>
-                <div class="flex flex-wrap gap-2">
+              <div class="mb-4 mobile-mb-4">
+                <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-2 mobile-text-sm">적용된 기법</h3>
+                <div class="flex flex-wrap gap-2 sm-mobile-gap-2">
                   {#each qualityMetrics.appliedTechniques as technique}
-                    <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-xs">
+                    <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-xs sm-mobile-text-xs">
                       {technique}
                     </span>
                   {/each}
@@ -2708,19 +2809,19 @@
           
         {:else}
           <!-- 프롬프트 생성 안내 및 생성 버튼 -->
-          <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl p-16 text-center border border-white/30 dark:border-gray-700/40 enhanced-shadow card-hover">
-            <div class="mb-8">
-              <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl flex items-center justify-center mx-auto mb-6 transform hover:rotate-12 transition-transform duration-500">
+          <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl p-16 text-center border border-white/30 dark:border-gray-700/40 enhanced-shadow card-hover mobile-prompt-result mobile-p-6">
+            <div class="mb-8 mobile-mb-6">
+              <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl flex items-center justify-center mx-auto mb-6 transform hover:rotate-12 transition-transform duration-500 mobile-touch-target touch-no-hover mobile-mb-4">
                 <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
               </div>
             </div>
-            <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">
+            <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6 mobile-subtitle sm-mobile-subtitle mobile-mb-4">
               Generate Your Prompt
             </h2>
-            <p class="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
-              5W1H 정보를 입력하고 원하는 옵션을 설정한 후<br>
+            <p class="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed mobile-desc mobile-mb-6">
+              5W1H 정보를 입력하고 원하는 옵션을 설정한 후<br class="hidden sm:block">
               <span class="font-semibold text-blue-600 dark:text-blue-400">생성 버튼을 눌러 최적화된 프롬프트를 만들어보세요</span>
             </p>
             
@@ -2729,36 +2830,36 @@
               <button
                 on:click={generatePrompt}
                 disabled={isGenerating}
-                class="group relative inline-flex items-center gap-4 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 active:scale-95 mb-6"
+                class="group relative inline-flex items-center gap-4 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 active:scale-95 mb-6 mobile-generate-btn mobile-touch-target touch-no-hover mobile-mb-4"
               >
                 {#if isGenerating}
                   <svg class="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                   </svg>
-                  프롬프트 생성 중...
+                  <span class="mobile-text-sm">프롬프트 생성 중...</span>
                 {:else}
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                   </svg>
-                  프롬프트 생성하기
+                  <span class="mobile-text-sm">프롬프트 생성하기</span>
                 {/if}
                 <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
               </button>
             {:else}
               <!-- 입력 안내 -->
-              <div class="inline-flex items-center gap-3 px-6 py-3 bg-yellow-100/80 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 rounded-xl backdrop-blur-sm border border-yellow-200/50 dark:border-yellow-700/50 mb-6">
+              <div class="inline-flex items-center gap-3 px-6 py-3 bg-yellow-100/80 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 rounded-xl backdrop-blur-sm border border-yellow-200/50 dark:border-yellow-700/50 mb-6 mobile-btn-sm mobile-mb-4">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                 </svg>
-                <span class="font-medium">최소한 "WHAT" 항목을 입력해주세요</span>
+                <span class="font-medium mobile-text-sm">최소한 "WHAT" 항목을 입력해주세요</span>
               </div>
             {/if}
             
-            <div class="inline-flex items-center gap-3 px-6 py-3 bg-blue-100/80 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-xl backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50">
+            <div class="inline-flex items-center gap-3 px-6 py-3 bg-blue-100/80 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-xl backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50 mobile-btn-sm">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
               </svg>
-              <span class="font-medium">5W1H전략과 최신 AI 기법으로 더 정확한 답변을 얻어보세요</span>
+              <span class="font-medium mobile-text-sm text-center">5W1H전략과 최신 AI 기법으로 더 정확한 답변을 얻어보세요</span>
             </div>
           </div>
         {/if}
