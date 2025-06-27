@@ -1862,8 +1862,8 @@
       
       /* 모바일에서 버튼 그룹 개선 */
       .mobile-btn-group {
-        flex-direction: column !important;
-        gap: 0.75rem !important;
+        flex-direction: row !important;
+        gap: 0.5rem !important;
       }
       
       /* 모바일에서 생성 버튼 크기 조정 */
@@ -2235,9 +2235,9 @@
               disabled={!hasMinimumInput}
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"/>
               </svg>
-              현재 내용 저장
+              SAVE
             </button>
             
             <button
@@ -2250,7 +2250,7 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
               </svg>
-              불러오기 ({userTemplates.length})
+              UPLOAD ({userTemplates.length})
             </button>
           </div>
 
@@ -2684,12 +2684,41 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                   </svg>
                 </div>
-                <h2 class="text-xl font-bold text-gray-800 dark:text-white mobile-text-sm truncate">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white truncate">
                   Generated Prompt
                 </h2>
               </div>
-              <div class="flex gap-2 mobile-btn-group">
+              <!-- 데스크톱: 가로 배치 -->
+              <div class="hidden sm:flex gap-2 flex-shrink-0">
                 <span class="px-3 py-2 bg-blue-100/80 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-xl text-sm font-semibold backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50 mobile-token-badge">
+                  {estimatedTokens} 토큰
+                </span>
+                <button
+                  on:click={clearPrompt}
+                  class="group/clear relative w-10 h-10 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center mobile-touch-target touch-no-hover"
+                  aria-label="프롬프트 초기화"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+                <button
+                  on:click={copyPrompt}
+                  class="group/copy relative w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center pulse-enhanced mobile-touch-target touch-no-hover"
+                  aria-label="프롬프트 복사"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 002 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 모바일: 세로 배치 (토큰 위, 버튼 아래) -->
+            <div class="sm:hidden mb-4">
+              <!-- 토큰과 버튼들을 한 줄에 중앙 정렬 -->
+              <div class="flex items-center justify-end gap-2">
+                <span class="px-3 py-2 bg-blue-100/80 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-xl text-sm font-semibold backdrop-blur-sm border border-blue-200/50 dark:border-blue-700/50">
                   {estimatedTokens} 토큰
                 </span>
                 <button
@@ -2729,7 +2758,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                   </svg>
                 </div>
-                <h2 class="text-xl font-bold text-gray-800 dark:text-white mobile-text-sm">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white">
                   Quality Analysis
                 </h2>
               </div>
