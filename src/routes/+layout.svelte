@@ -47,9 +47,9 @@
     style: 'background: #363636; color: #fff; border-radius: 12px; padding: 16px; font-weight: 600; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);'
   }}
 />
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors flex flex-col">
   <!-- 헤더 -->
-  <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+  <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
     <div class="container mx-auto px-4 py-4">
       <div class="flex items-center justify-between">
         <!-- 로고 -->
@@ -128,12 +128,12 @@
   </header>
   
   <!-- 메인 컨텐츠 -->
-  <main class="container mx-auto px-4 py-8">
+  <main class="flex-1 container mx-auto px-4 py-8">
     <slot />
   </main>
   
   <!-- 푸터 -->
-  <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12">
+  <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
     <div class="container mx-auto px-4 py-6">
       <div class="text-center text-gray-600 dark:text-gray-400">
         <p class="text-sm">

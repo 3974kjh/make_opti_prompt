@@ -10,7 +10,7 @@
   import TemplateEditModal from '$lib/components/modals/TemplateEditModal.svelte';
   import TemplateSaveModal from '$lib/components/modals/TemplateSaveModal.svelte';
   import TemplatePreviewModal from '$lib/components/modals/TemplatePreviewModal.svelte';
-
+  
   // 상태 관리
   let formData = $state<PromptFormData>({
     who: [],
@@ -94,35 +94,35 @@
     
     if (!templateSelectOpen) {
       // 드롭다운 열기
-      const button = event.currentTarget as HTMLElement;
-      const rect = button.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
       const dropdownWidth = Math.max(rect.width, 300); // 최소 너비 300px
-      const dropdownHeight = 320;
-      
-      // 가로 위치 조정
-      let left = rect.left;
-      if (left + dropdownWidth > viewportWidth - 20) {
-        left = viewportWidth - dropdownWidth - 20;
-      }
-      
-      // 세로 위치 조정
-      let top = rect.bottom + 8;
-      let isAbove = false;
-      if (top + dropdownHeight > viewportHeight - 20) {
-        top = rect.top - dropdownHeight - 8;
-        isAbove = true;
-      }
-      
+    const dropdownHeight = 320;
+    
+    // 가로 위치 조정
+    let left = rect.left;
+    if (left + dropdownWidth > viewportWidth - 20) {
+      left = viewportWidth - dropdownWidth - 20;
+    }
+    
+    // 세로 위치 조정
+    let top = rect.bottom + 8;
+    let isAbove = false;
+    if (top + dropdownHeight > viewportHeight - 20) {
+      top = rect.top - dropdownHeight - 8;
+      isAbove = true;
+    }
+    
       templateButtonRect = {
-        ...rect,
-        left: Math.max(20, left),
-        top: Math.max(20, top),
-        bottom: isAbove ? top + dropdownHeight : top,
-        width: dropdownWidth
-      };
+      ...rect,
+      left: Math.max(20, left),
+      top: Math.max(20, top),
+      bottom: isAbove ? top + dropdownHeight : top,
+      width: dropdownWidth
+    };
       templateSelectOpen = true;
     } else {
       // 드롭다운 닫기
@@ -138,33 +138,33 @@
     outputFormatSelectOpen = false;
     
     if (!techniqueSelectOpen) {
-      const button = event.currentTarget as HTMLElement;
-      const rect = button.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
       const dropdownWidth = Math.max(rect.width, 320);
-      const dropdownHeight = 320;
-      
-      let left = rect.left;
-      if (left + dropdownWidth > viewportWidth - 20) {
-        left = viewportWidth - dropdownWidth - 20;
-      }
-      
-      let top = rect.bottom + 8;
-      let isAbove = false;
-      if (top + dropdownHeight > viewportHeight - 20) {
-        top = rect.top - dropdownHeight - 8;
-        isAbove = true;
-      }
-      
+    const dropdownHeight = 320;
+    
+    let left = rect.left;
+    if (left + dropdownWidth > viewportWidth - 20) {
+      left = viewportWidth - dropdownWidth - 20;
+    }
+    
+    let top = rect.bottom + 8;
+    let isAbove = false;
+    if (top + dropdownHeight > viewportHeight - 20) {
+      top = rect.top - dropdownHeight - 8;
+      isAbove = true;
+    }
+    
       techniqueButtonRect = {
-        ...rect,
-        left: Math.max(20, left),
-        top: Math.max(20, top),
-        bottom: isAbove ? top + dropdownHeight : top,
-        width: dropdownWidth
-      };
+      ...rect,
+      left: Math.max(20, left),
+      top: Math.max(20, top),
+      bottom: isAbove ? top + dropdownHeight : top,
+      width: dropdownWidth
+    };
       techniqueSelectOpen = true;
     } else {
       techniqueSelectOpen = false;
@@ -179,33 +179,33 @@
     techniqueSelectOpen = false;
     
     if (!outputFormatSelectOpen) {
-      const button = event.currentTarget as HTMLElement;
-      const rect = button.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
       const dropdownWidth = Math.max(rect.width, 250);
       const dropdownHeight = 200;
-      
-      let left = rect.left;
-      if (left + dropdownWidth > viewportWidth - 20) {
-        left = viewportWidth - dropdownWidth - 20;
-      }
-      
-      let top = rect.bottom + 8;
-      let isAbove = false;
-      if (top + dropdownHeight > viewportHeight - 20) {
-        top = rect.top - dropdownHeight - 8;
-        isAbove = true;
-      }
-      
+    
+    let left = rect.left;
+    if (left + dropdownWidth > viewportWidth - 20) {
+      left = viewportWidth - dropdownWidth - 20;
+    }
+    
+    let top = rect.bottom + 8;
+    let isAbove = false;
+    if (top + dropdownHeight > viewportHeight - 20) {
+      top = rect.top - dropdownHeight - 8;
+      isAbove = true;
+    }
+    
       outputFormatButtonRect = {
-        ...rect,
-        left: Math.max(20, left),
-        top: Math.max(20, top),
-        bottom: isAbove ? top + dropdownHeight : top,
-        width: dropdownWidth
-      };
+      ...rect,
+      left: Math.max(20, left),
+      top: Math.max(20, top),
+      bottom: isAbove ? top + dropdownHeight : top,
+      width: dropdownWidth
+    };
       outputFormatSelectOpen = true;
     } else {
       outputFormatSelectOpen = false;
@@ -270,7 +270,7 @@
       newElement.focus();
       // 모바일 환경에서 자동 스크롤
       if (window.innerWidth <= 768) {
-        setTimeout(() => {
+    setTimeout(() => {
           newElement.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'center' 
@@ -573,8 +573,31 @@
     // 사용자 템플릿 로드
     loadUserTemplates();
 
+    // 터치 스크롤 상태 추적
+    let isScrolling = false;
+    let scrollTimeout: number;
+
+    // 스크롤 시작 감지
+    const handleTouchStart = () => {
+      isScrolling = false;
+    };
+
+    // 스크롤 중 감지
+    const handleTouchMove = () => {
+      isScrolling = true;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 150); // 스크롤 종료 후 150ms 대기
+    };
+
     // 외부 클릭 시 dropdown 닫기
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      // 터치 스크롤 중이면 드롭다운 닫지 않음
+      if (isScrolling) {
+        return;
+      }
+
       const target = event.target as Element;
       
       // 편집 모달이 열려있을 때는 외부 클릭으로 닫지 않음
@@ -603,9 +626,27 @@
       }
     };
 
-    // 스크롤 시 드롭다운 닫기
-    const handleScroll = () => {
+    // 스크롤 시 드롭다운 닫기 (단, 드롭다운 내부 스크롤 제외)
+    const handleScroll = (event: Event) => {
+      const target = event.target as Element;
+      
+      // 드롭다운 내부 스크롤이면 닫지 않음
+      if (target.closest('.portal-dropdown')) {
+        return;
+      }
+      
+      // 드롭다운이 열려있을 때만 체크
+      if (templateSelectOpen || techniqueSelectOpen || outputFormatSelectOpen) {
       closeAllDropdowns();
+      }
+    };
+
+    // 윈도우 스크롤 시 드롭다운 닫기 (전역 스크롤)
+    const handleWindowScroll = () => {
+      // 어떤 드롭다운이라도 열려있으면 닫기
+      if (templateSelectOpen || techniqueSelectOpen || outputFormatSelectOpen) {
+        closeAllDropdowns();
+      }
     };
 
     // 리사이즈 시 드롭다운 닫기
@@ -613,14 +654,24 @@
       closeAllDropdowns();
     };
 
+    // 이벤트 리스너 등록
     document.addEventListener('click', handleClickOutside);
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('touchend', handleClickOutside); // 터치 이벤트도 처리
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('scroll', handleScroll, { passive: true, capture: true }); // capture 추가로 더 정확한 감지
+    window.addEventListener('scroll', handleWindowScroll, { passive: true }); // 윈도우 스크롤 추가
     window.addEventListener('resize', handleResize);
     
     return () => {
       document.removeEventListener('click', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('touchend', handleClickOutside);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('scroll', handleScroll, true); // capture 제거 시에도 true 필요
+      window.removeEventListener('scroll', handleWindowScroll);
       window.removeEventListener('resize', handleResize);
+      clearTimeout(scrollTimeout);
       enableBodyScroll(); // 컴포넌트 언마운트 시 스크롤 복원
     };
   });
@@ -1411,6 +1462,16 @@
     /* Portal 드롭다운 스타일 */
     .portal-dropdown {
       overflow-x: hidden !important;
+      /* 모바일 터치 스크롤 최적화 */
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      /* iOS에서 스크롤 바운스 방지 */
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
     }
 
     .portal-dropdown::-webkit-scrollbar-horizontal {
@@ -1420,6 +1481,33 @@
     .portal-dropdown::-webkit-scrollbar {
       width: 8px;
       height: 0px; /* 가로 스크롤바 높이를 0으로 */
+    }
+
+    /* 모바일에서 드롭다운 터치 영역 최적화 */
+    @media (max-width: 768px) {
+      .portal-dropdown {
+        /* 모바일에서 더 부드러운 스크롤 */
+        scroll-behavior: smooth;
+        /* 터치 시 하이라이트 방지 */
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      .select-option {
+        /* 모바일에서 터치 영역 확대 */
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        /* 터치 시 하이라이트 방지 */
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      .select-optgroup {
+        /* 모바일에서 그룹 헤더 최적화 */
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        -webkit-tap-highlight-color: transparent;
+      }
     }
 
     /* 향상된 입력 필드 스타일 */
@@ -1835,7 +1923,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 xl:grid-auto-rows-fr mobile-grid-1 sm-mobile-gap-2">
         {#each fields as field}
           <div class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/50 hover:border-blue-300/50 dark:hover:border-blue-500/50 transition-all duration-300 card-hover enhanced-shadow group flex flex-col field-card field-card-auto-height mobile-p-4 sm-mobile-p-3 touch-no-hover"
-              transition:scale={{ duration: 200, easing: quintOut }}>
+               transition:scale={{ duration: 200, easing: quintOut }}>
             <div class="flex items-start justify-between mb-4 flex-shrink-0 mobile-mb-4">
               <label class="flex items-center gap-3 text-sm font-bold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 flex-1 min-w-0 mobile-text-sm sm-mobile-text-xs">
                 <span class="p-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300 flex-shrink-0 mobile-touch-target">
@@ -1868,41 +1956,41 @@
             <!-- 입력 영역 -->
             <div class="flex-1 flex flex-col field-card-inputs">
               <div class="space-y-3 flex-1 mobile-scroll-smooth ios-no-bounce">
-                {#each formData[field.key] as item, index (item.id)}
-                  <div class="relative group/item" 
+              {#each formData[field.key] as item, index (item.id)}
+                <div class="relative group/item" 
                        transition:slide={{ duration: 200, easing: quintOut }}>
-                    <textarea
-                      bind:value={item.value}
-                      data-field={field.key}
+                  <textarea
+                    bind:value={item.value}
+                    data-field={field.key}
                       data-item-id={item.id}
                       on:input={() => onInputChange()}
                       placeholder={`${field.label} 입력...`}
-                      rows="3"
+                    rows="3"
                       class="w-full px-4 py-3 bg-white/70 dark:bg-gray-900/50 border border-gray-200/50 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-900/60 resize-none overflow-y-auto max-h-32 mobile-no-zoom mobile-touch-target custom-scrollbar"
-                    ></textarea>
+                  ></textarea>
                     <!-- x버튼을 textarea 상단 오른쪽에 겹쳐서 배치 -->
-                    <button
+                  <button
                       on:click={() => removeItem(field.key, index)}
                       class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center opacity-0 group-hover/item:opacity-100 focus:opacity-100 hover:scale-110 active:scale-95 z-10 border-2 border-white dark:border-gray-800"
                       aria-label="{field.label} 항목 삭제"
                     >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                      </svg>
-                    </button>
-                  </div>
-                {/each}
-              </div>
+                    </svg>
+                  </button>
+                </div>
+              {/each}
+                </div>
               
               <!-- 항목 추가 버튼 -->
-              <button
-                on:click={() => addItem(field.key)}
+                  <button
+                    on:click={() => addItem(field.key)}
                 class="{formData[field.key].length > 0 ? 'mt-4' : ''} w-full py-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 dark:from-blue-500/20 dark:to-purple-500/20 dark:hover:from-blue-500/30 dark:hover:to-purple-500/30 text-blue-600 dark:text-blue-400 rounded-xl border-2 border-dashed border-blue-300/50 dark:border-blue-500/50 hover:border-blue-400/70 dark:hover:border-blue-400/70 transition-all duration-300 flex items-center justify-center gap-2 font-medium hover:scale-[1.02] active:scale-[0.98] mobile-touch-target touch-btn touch-no-hover"
-              >
+                  >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-              </button>
+                    </svg>
+                  </button>
             </div>
           </div>
         {/each}
@@ -2596,6 +2684,10 @@
     class="portal-dropdown fixed z-[99999] bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 max-h-80 overflow-y-auto"
     style="top: {templateButtonRect.top}px; left: {templateButtonRect.left}px; width: {templateButtonRect.width}px;"
     transition:slide={{ duration: 200, easing: quintOut }}
+    on:click={(e) => e.stopPropagation()}
+    on:touchstart={(e) => e.stopPropagation()}
+    on:touchmove={(e) => e.stopPropagation()}
+    on:touchend={(e) => e.stopPropagation()}
   >
     {#each templateOptions as group}
       <div class="select-optgroup">{group.categoryName}</div>
@@ -2625,6 +2717,10 @@
     class="portal-dropdown fixed z-[99999] bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 max-h-80 overflow-y-auto"
     style="top: {techniqueButtonRect.top}px; left: {techniqueButtonRect.left}px; width: {techniqueButtonRect.width}px;"
     transition:slide={{ duration: 200, easing: quintOut }}
+    on:click={(e) => e.stopPropagation()}
+    on:touchstart={(e) => e.stopPropagation()}
+    on:touchmove={(e) => e.stopPropagation()}
+    on:touchend={(e) => e.stopPropagation()}
   >
     {#each techniqueOptions as option}
       <div 
@@ -2651,6 +2747,10 @@
     class="portal-dropdown fixed z-[99999] bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 max-h-48 overflow-y-auto"
     style="top: {outputFormatButtonRect.top}px; left: {outputFormatButtonRect.left}px; width: {outputFormatButtonRect.width}px;"
     transition:slide={{ duration: 200, easing: quintOut }}
+    on:click={(e) => e.stopPropagation()}
+    on:touchstart={(e) => e.stopPropagation()}
+    on:touchmove={(e) => e.stopPropagation()}
+    on:touchend={(e) => e.stopPropagation()}
   >
     {#each outputFormatOptions as option}
       <div 
