@@ -283,7 +283,7 @@
     <div class="container mx-auto px-4 py-6">
       <div class="text-center text-gray-600 dark:text-gray-400">
         <p class="text-sm">
-          © 2024 프롬프트 최적화. 5W1H전략으로 더 나은 AI 대화를 만들어보세요.
+          © 2025 프롬프트 최적화. 5W1H전략으로 더 나은 AI 대화를 만들어보세요.
         </p>
         <p class="text-xs mt-2">
           Made with Jukim using Svelte 5 & Tailwind CSS
